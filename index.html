@@ -1,0 +1,2716 @@
+<html>
+   <head>
+      <title>Pok&eacute;mon FireRed scripting commands</title>
+      <noscript>
+         <style>
+            .js-only{display:none}
+            #list div.collapsible-section>div.body{display:block!important}
+         </style>
+      </noscript>
+      <script src="jquery-1.6.2.min.js" type="text/javascript"></script>
+      <script src="filter.js" type="text/javascript"></script>
+	  <link rel="stylesheet" href="style.css" type="text/css" media="screen"/>
+   </head>
+   <body>
+      <h1>Pok&eacute;mon FireRed Scripting Commands</h1>
+	  <h4>original document created by <a href="http://www.pokecommunity.com/member.php?username=DavidJCobb">DavidJCobb<a/> with some revisions</h4>
+      <p>This document is meant to serve as a comprehensive reference to 
+         each scripting command. The information is FireRed-centric and 
+         includes detailed descriptions of what the commands do, the 
+         locations of their ASM code, and more.</p>
+      <p>Commands above <code>0xD5</code> are not listed because they do 
+         not exist in FireRed.</p>
+	  <p>Some revisions have been added in. They are styled
+		 <span class="comment">like so</span>. Want to make a contribution? <a href="http://www.pokecommunity.com/member.php?username=Spherical Ice">PM Spherical Ice on Pok&eacute;Community</a>, or <a href="mailto:sphericalice@outlook.com">e-mail him</a>.
+      <h2>Table of contents</h2>
+      <ol id="TOC">
+         <li>
+            <a href="#data-types">List of data types</a>
+         </li>
+         <li>
+            <a href="#commands">List of script commands</a>
+            <form id="command-list-filter" class="js-only">
+               <p class="form-header">Filter:</p>
+               <ul class="states">
+                  <li><input type="checkbox" data-type="undocumented" id="fUndoc"> <label for="fUndoc">Undocumented</label></li>
+                  <li><input type="checkbox" data-type="documented" id="fDoc"> <label for="fDoc">Documented</label></li>
+                  <li><input type="checkbox" data-type="complete" id="fCom"> <label for="fCom">Complete</label></li>
+                  <li><input type="checkbox" data-type="incomplete" id="fInc"> <label for="fInc">Incomplete</label></li>
+
+                  <li class="right"><input type="checkbox" id="fAll"> <label for="fAll">All</label></li>
+               </ul>
+               <ul class="types">
+                  <li><input type="checkbox" data-type="banks" id="fBanks"> <label for="fBanks">Banks</label></li>
+                  <li><input type="checkbox" data-type="battles" id="fBattles"> <label for="fBattles">Battles</label></li>
+                  <li><input type="checkbox" data-type="blocking" id="fBlocking"> <label for="fBlocking">Blocking</label></li>
+                  <li><input type="checkbox" data-type="buffer" id="fBuffer"> <label for="fBuffer">Buffer</label></li>
+                  <li><input type="checkbox" data-type="comparisons" id="fComparisons"> <label for="fComparisons">Comparisons</label></li>
+                  <li><input type="checkbox" data-type="dialogs" id="fDialogs"> <label for="fDialogs">Dialogs</label></li>
+                  <li><input type="checkbox" data-type="flags" id="fFlags"> <label for="fFlags">Flags</label></li>
+                  <li><input type="checkbox" data-type="items" id="fItems"> <label for="fItems">Items</label></li>
+                  <li><input type="checkbox" data-type="logic" id="fLogic"> <label for="Logic">Logic</label></li>
+                  <li><input type="checkbox" data-type="map" id="fMap"> <label for="fMap">Map</label></li>
+                  <li><input type="checkbox" data-type="sound" id="fSound"> <label for="fSound">Sound</label></li>
+                  <li><input type="checkbox" data-type="std" id="fStd"> <label for="fStd">Std</label></li>
+                  <li><input type="checkbox" data-type="timing" id="fTiming"> <label for="fTiming">Timing</label></li>
+                  <li><input type="checkbox" data-type="variables" id="fVariables"> <label for="fVariables">Variables</label></li>
+                  <li><input type="checkbox" data-type="warping" id="fWarping"> <label for="fWarping">Warping</label></li>
+                  <li><input type="checkbox" data-type="nop" id="fNop"> <label for="fNop">Nop</label></li>
+                  <li><input type="checkbox" data-type="unknown" id="fUnknown"> <label for="fUnknown">Unknown</label></li>
+                  <li><input type="checkbox" data-type="uncategorized" id="fUncat"> <label for="fUncat">Uncategorized</label></li>
+               </ul>
+            </form>
+            <ol id="command-list-TOC" class="height-limited" start="0">
+               <li><a href="#c-00" class="c-link">0x00 nop</a></li>
+               <li><a href="#c-01" class="c-link">0x01 nop1</a></li>
+               <li><a href="#c-02" class="c-link">0x02 end</a></li>
+               <li><a href="#c-03" class="c-link">0x03 return</a></li>
+               <li><a href="#c-04" class="c-link">0x04 call</a></li>
+               <li><a href="#c-05" class="c-link">0x05 goto</a></li>
+               <li><a href="#c-06" class="c-link">0x06 if1</a> (if)</li>
+               <li><a href="#c-07" class="c-link">0x07 if2</a> (if)</li>
+               <li><a href="#c-08" class="c-link">0x08 gotostd</a></li>
+               <li><a href="#c-09" class="c-link">0x09 callstd</a></li>
+               <li><a href="#c-0A" class="c-link">0x0A gotostdif</a></li>
+               <li><a href="#c-0B" class="c-link">0x0B callstdif</a></li>
+               <li><a href="#c-0C" class="c-link">0x0C jumpram</a></li>
+               <li><a href="#c-0D" class="c-link">0x0D killscript</a></li>
+               <li><a href="#c-0E" class="c-link">0x0E setbyte</a></li>
+               <li><a href="#c-0F" class="c-link">0x0F loadpointer</a> (acts like "setbank")</li>
+               <li><a href="#c-10" class="c-link">0x10 setbyte2</a></li>
+               <li><a href="#c-11" class="c-link">0x11 writebytetooffset</a></li>
+               <li><a href="#c-12" class="c-link">0x12 loadbytefrompointer</a></li>
+               <li><a href="#c-13" class="c-link">0x13 setfarbyte</a></li>
+               <li><a href="#c-14" class="c-link">0x14 copyscriptbanks</a></li>
+               <li><a href="#c-15" class="c-link">0x15 copybyte</a></li>
+               <li><a href="#c-16" class="c-link">0x16 setvar</a></li>
+               <li><a href="#c-17" class="c-link">0x17 addvar</a></li>
+               <li><a href="#c-18" class="c-link">0x18 subvar</a></li>
+               <li><a href="#c-19" class="c-link">0x19 copyvar</a></li>
+               <li><a href="#c-1A" class="c-link">0x1A copyvarifnotzero</a> (acts like "copyorsetvar")</li>
+               <li><a href="#c-1B" class="c-link">0x1B comparebanks</a></li>
+               <li><a href="#c-1C" class="c-link">0x1C comparebanktobyte</a></li>
+               <li><a href="#c-1D" class="c-link">0x1D comparebanktofarbyte</a></li>
+               <li><a href="#c-1E" class="c-link">0x1E comparefarbytetobank</a></li>
+               <li><a href="#c-1F" class="c-link">0x1F comparefarbytetobyte</a></li>
+               <li><a href="#c-20" class="c-link">0x20 comparefarbytes</a></li>
+               <li><a href="#c-21" class="c-link">0x21 compare</a></li>
+               <li><a href="#c-22" class="c-link">0x22 comparevars</a></li>
+               <li><a href="#c-23" class="c-link">0x23 callasm</a></li>
+               <li><a href="#c-24" class="c-link">0x24 cmd24</a></li>
+               <li><a href="#c-25" class="c-link">0x25 special</a></li>
+               <li><a href="#c-26" class="c-link">0x26 special2</a></li>
+               <li><a href="#c-27" class="c-link">0x27 waitstate</a></li>
+               <li><a href="#c-28" class="c-link">0x28 pause</a></li>
+               <li><a href="#c-29" class="c-link">0x29 setflag</a></li>
+               <li><a href="#c-2A" class="c-link">0x2A clearflag</a></li>
+               <li><a href="#c-2B" class="c-link">0x2B checkflag</a></li>
+               <li><a href="#c-2C" class="c-link">0x2C cmd2c</a> (nop)</li>
+               <li><a href="#c-2D" class="c-link">0x2D checkdailyflags</a> (nop)</li>
+               <li><a href="#c-2E" class="c-link">0x2E resetvars</a></li>
+               <li><a href="#c-2F" class="c-link">0x2F sound</a></li>
+               <li><a href="#c-30" class="c-link">0x30 checksound</a> (acts like "waitsound")</li>
+               <li><a href="#c-31" class="c-link">0x31 fanfare</a></li>
+               <li><a href="#c-32" class="c-link">0x32 waitfanfare</a></li>
+               <li><a href="#c-33" class="c-link">0x33 playsong</a></li>
+               <li><a href="#c-34" class="c-link">0x34 playsong2</a></li>
+               <li><a href="#c-35" class="c-link">0x35 fadedefault</a></li>
+               <li><a href="#c-36" class="c-link">0x36 fadesong</a></li>
+               <li><a href="#c-37" class="c-link">0x37 fadeout</a></li>
+               <li><a href="#c-38" class="c-link">0x38 fadein</a></li>
+               <li><a href="#c-39" class="c-link">0x39 warp</a></li>
+               <li><a href="#c-3A" class="c-link">0x3A warpmuted</a></li>
+               <li><a href="#c-3B" class="c-link">0x3B warpwalk</a></li>
+               <li><a href="#c-3C" class="c-link">0x3C warphole</a></li>
+               <li><a href="#c-3D" class="c-link">0x3D warpteleport</a></li>
+               <li><a href="#c-3E" class="c-link">0x3E warp3</a></li>
+               <li><a href="#c-3F" class="c-link">0x3F setwarpplace</a></li>
+               <li><a href="#c-40" class="c-link">0x40 warp4</a></li>
+               <li><a href="#c-41" class="c-link">0x41 warp5</a></li>
+               <li><a href="#c-42" class="c-link">0x42 getplayerpos</a></li>
+               <li><a href="#c-43" class="c-link">0x43 countPok&eacute;mon</a></li>
+               <li><a href="#c-44" class="c-link">0x44 additem</a></li>
+               <li><a href="#c-45" class="c-link">0x45 removeitem</a></li>
+               <li><a href="#c-46" class="c-link">0x46 checkitemroom</a></li>
+               <li><a href="#c-47" class="c-link">0x47 checkitem</a></li>
+               <li><a href="#c-48" class="c-link">0x48 checkitemtype</a></li>
+               <li><a href="#c-49" class="c-link">0x49 addpcitem</a></li>
+               <li><a href="#c-4A" class="c-link">0x4A checkpcitem</a></li>
+               <li><a href="#c-4B" class="c-link">0x4B adddecoration</a> (nop)</li>
+               <li><a href="#c-4C" class="c-link">0x4C removedecoration</a> (nop)</li>
+               <li><a href="#c-4D" class="c-link">0x4D testdecoration</a> (nop)</li>
+               <li><a href="#c-4E" class="c-link">0x4E checkdecoration</a> (nop)</li>
+               <li><a href="#c-4F" class="c-link">0x4F applymovement</a></li>
+               <li><a href="#c-50" class="c-link">0x50 applymovementpos</a></li>
+               <li><a href="#c-51" class="c-link">0x51 waitmovement</a></li>
+               <li><a href="#c-52" class="c-link">0x52 waitmovementpos</a></li>
+               <li><a href="#c-53" class="c-link">0x53 hidesprite</a></li>
+               <li><a href="#c-54" class="c-link">0x54 hidespritepos</a></li>
+               <li><a href="#c-55" class="c-link">0x55 showsprite</a></li>
+               <li><a href="#c-56" class="c-link">0x56 showspritepos</a></li>
+               <li><a href="#c-57" class="c-link">0x57 movesprite</a></li>
+               <li><a href="#c-58" class="c-link">0x58 spritevisible</a></li>
+               <li><a href="#c-59" class="c-link">0x59 spriteinvisible</a></li>
+               <li><a href="#c-5A" class="c-link">0x5A faceplayer</a></li>
+               <li><a href="#c-5B" class="c-link">0x5B spriteface</a></li>
+               <li><a href="#c-5C" class="c-link">0x5C trainerbattle</a></li>
+               <li><a href="#c-5D" class="c-link">0x5D repeattrainerbattle</a> (acts like "dotrainerbattle")</li>
+               <li><a href="#c-5E" class="c-link">0x5E endtrainerbattle</a></li>
+               <li><a href="#c-5F" class="c-link">0x5F endtrainerbattle2</a></li>
+               <li><a href="#c-60" class="c-link">0x60 checktrainerflag</a></li>
+               <li><a href="#c-61" class="c-link">0x61 cleartrainerflag</a> (acts like "settrainerflag")</li>
+               <li><a href="#c-62" class="c-link">0x62 settrainerflag</a> (acts like "cleartrainerflag")</li>
+               <li><a href="#c-63" class="c-link">0x63 movesprite2</a></li>
+               <li><a href="#c-64" class="c-link">0x64 moveoffscreen</a></li>
+               <li><a href="#c-65" class="c-link">0x65 spritebehave</a></li>
+               <li><a href="#c-66" class="c-link">0x66 waitmsg</a></li>
+               <li><a href="#c-67" class="c-link">0x67 preparemsg</a></li>
+               <li><a href="#c-68" class="c-link">0x68 closeonkeypress</a></li>
+               <li><a href="#c-69" class="c-link">0x69 lockall</a></li>
+               <li><a href="#c-6A" class="c-link">0x6A lock</a></li>
+               <li><a href="#c-6B" class="c-link">0x6B releaseall</a></li>
+               <li><a href="#c-6C" class="c-link">0x6C release</a></li>
+               <li><a href="#c-6D" class="c-link">0x6D waitkeypress</a></li>
+               <li><a href="#c-6E" class="c-link">0x6E yesnobox</a></li>
+               <li><a href="#c-6F" class="c-link">0x6F multichoice</a></li>
+               <li><a href="#c-70" class="c-link">0x70 multichoice2</a></li>
+               <li><a href="#c-71" class="c-link">0x71 multichoice3</a></li>
+               <li><a href="#c-72" class="c-link">0x72 showbox</a></li>
+               <li><a href="#c-73" class="c-link">0x73 hidebox</a></li>
+               <li><a href="#c-74" class="c-link">0x74 clearbox</a></li>
+               <li><a href="#c-75" class="c-link">0x75 showpokepic</a></li>
+               <li><a href="#c-76" class="c-link">0x76 hidepokepic</a></li>
+               <li><a href="#c-77" class="c-link">0x77 showcontestwinner</a> (nop)</li>
+               <li><a href="#c-78" class="c-link">0x78 braille</a></li>
+               <li><a href="#c-79" class="c-link">0x79 givePok&eacute;mon</a></li>
+               <li><a href="#c-7A" class="c-link">0x7A giveegg</a></li>
+               <li><a href="#c-7B" class="c-link">0x7B setpkmnpp</a></li>
+               <li><a href="#c-7C" class="c-link">0x7C checkattack</a></li>
+               <li><a href="#c-7D" class="c-link">0x7D bufferPok&eacute;mon</a></li>
+               <li><a href="#c-7E" class="c-link">0x7E bufferfirstPok&eacute;mon</a></li>
+               <li><a href="#c-7F" class="c-link">0x7F bufferpartyPok&eacute;mon</a></li>
+               <li><a href="#c-80" class="c-link">0x80 bufferitem</a></li>
+               <li><a href="#c-81" class="c-link">0x81 bufferdecoration</a> (nop)</li>
+               <li><a href="#c-82" class="c-link">0x82 bufferattack</a></li>
+               <li><a href="#c-83" class="c-link">0x83 buffernumber</a></li>
+               <li><a href="#c-84" class="c-link">0x84 bufferstd</a></li>
+               <li><a href="#c-85" class="c-link">0x85 bufferstring</a></li>
+               <li><a href="#c-86" class="c-link">0x86 pokemart</a></li>
+               <li><a href="#c-87" class="c-link">0x87 pokemart2</a></li>
+               <li><a href="#c-88" class="c-link">0x88 pokemart3</a></li>
+               <li><a href="#c-89" class="c-link">0x89 pokecasino</a></li>
+               <li><a href="#c-8A" class="c-link">0x8A cmd8a</a> (nop)</li>
+               <li><a href="#c-8B" class="c-link">0x8B choosecontestpkmn</a></li>
+               <li><a href="#c-8C" class="c-link">0x8C startcontest</a> (nop)</li>
+               <li><a href="#c-8D" class="c-link">0x8D showcontestresults</a> (nop)</li>
+               <li><a href="#c-8E" class="c-link">0x8E contestlinktransfer</a> (nop)</li>
+               <li><a href="#c-8F" class="c-link">0x8F random</a></li>
+               <li><a href="#c-90" class="c-link">0x90 givemoney</a></li>
+               <li><a href="#c-91" class="c-link">0x91 paymoney</a></li>
+               <li><a href="#c-92" class="c-link">0x92 checkmoney</a></li>
+               <li><a href="#c-93" class="c-link">0x93 showmoney</a></li>
+               <li><a href="#c-94" class="c-link">0x94 hidemoney</a></li>
+               <li><a href="#c-95" class="c-link">0x95 updatemoney</a></li>
+               <li><a href="#c-96" class="c-link">0x96 cmd96</a> (nop)</li>
+               <li><a href="#c-97" class="c-link">0x97 fadescreen</a></li>
+               <li><a href="#c-98" class="c-link">0x98 fadescreendelay</a></li>
+               <li><a href="#c-99" class="c-link">0x99 darken</a></li>
+               <li><a href="#c-9A" class="c-link">0x9A lighten</a></li>
+               <li><a href="#c-9B" class="c-link">0x9B preparemsg2</a></li>
+               <li><a href="#c-9C" class="c-link">0x9C doanimation</a></li>
+               <li><a href="#c-9D" class="c-link">0x9D setanimation</a></li>
+               <li><a href="#c-9E" class="c-link">0x9E checkanimation</a> (acts like "waitanimation")</li>
+               <li><a href="#c-9F" class="c-link">0x9F sethealingplace</a></li>
+               <li><a href="#c-A0" class="c-link">0xA0 checkgender</a></li>
+               <li><a href="#c-A1" class="c-link">0xA1 cry</a></li>
+               <li><a href="#c-A2" class="c-link">0xA2 setmaptile</a></li>
+               <li><a href="#c-A3" class="c-link">0xA3 resetweather</a></li>
+               <li><a href="#c-A4" class="c-link">0xA4 setweather</a></li>
+               <li><a href="#c-A5" class="c-link">0xA5 doweather</a></li>
+               <li><a href="#c-A6" class="c-link">0xA6 cmda6</a> (acts like "settilemanager")</li>
+               <li><a href="#c-A7" class="c-link">0xA7 setmapfooter</a></li>
+               <li><a href="#c-A8" class="c-link">0xA8 spritelevelup</a></li>
+               <li><a href="#c-A9" class="c-link">0xA9 restorespritelevel</a></li>
+               <li><a href="#c-AA" class="c-link">0xAA createsprite</a></li>
+               <li><a href="#c-AB" class="c-link">0xAB spriteface2</a></li>
+               <li><a href="#c-AC" class="c-link">0xAC setdooropened</a></li>
+               <li><a href="#c-AD" class="c-link">0xAD setdoorclosed</a></li>
+               <li><a href="#c-AE" class="c-link">0xAE doorchange</a></li>
+               <li><a href="#c-AF" class="c-link">0xAF setdooropened2</a></li>
+               <li><a href="#c-B0" class="c-link">0xB0 setdoorclosed2</a></li>
+               <li><a href="#c-B1" class="c-link">0xB1 cmdb1</a> (nop)</li>
+               <li><a href="#c-B2" class="c-link">0xB2 cmdb2</a> (nop)</li>
+               <li><a href="#c-B3" class="c-link">0xB3 checkcoins</a></li>
+               <li><a href="#c-B4" class="c-link">0xB4 givecoins</a></li>
+               <li><a href="#c-B5" class="c-link">0xB5 removecoins</a></li>
+               <li><a href="#c-B6" class="c-link">0xB6 setwildbattle</a></li>
+               <li><a href="#c-B7" class="c-link">0xB7 dowildbattle</a></li>
+               <li><a href="#c-B8" class="c-link">0xB8 setvirtualaddress</a></li>
+               <li><a href="#c-B9" class="c-link">0xB9 virtualgoto</a></li>
+               <li><a href="#c-BA" class="c-link">0xBA virtualcall</a></li>
+               <li><a href="#c-BB" class="c-link">0xBB virtualgotoif</a></li>
+               <li><a href="#c-BC" class="c-link">0xB9 virtualcallif</a></li>
+               <li><a href="#c-BD" class="c-link">0xB9 virtualmsgbox</a></li>
+               <li><a href="#c-BE" class="c-link">0xB9 virtualloadpointer</a></li>
+               <li><a href="#c-BF" class="c-link">0xB9 virtualbuffer</a></li>
+               <li><a href="#c-C0" class="c-link">0xC0 showcoins</a></li>
+               <li><a href="#c-C1" class="c-link">0xC1 hidecoins</a></li>
+               <li><a href="#c-C2" class="c-link">0xC2 updatecoins</a></li>
+               <li><a href="#c-C3" class="c-link">0xC3 cmdc3</a></li>
+               <li><a href="#c-C4" class="c-link">0xC4 warp6</a></li>
+               <li><a href="#c-C5" class="c-link">0xC5 waitcry</a></li>
+               <li><a href="#c-C6" class="c-link">0xC6 bufferboxname</a></li>
+               <li><a href="#c-C7" class="c-link">0xC7 textcolor</a></li>
+               <li><a href="#c-C8" class="c-link">0xC8 cmdc8</a></li>
+               <li><a href="#c-C9" class="c-link">0xC9 cmdc9</a></li>
+               <li><a href="#c-CA" class="c-link">0xCA signmsg</a></li>
+               <li><a href="#c-CB" class="c-link">0xCB normalmsg</a></li>
+               <li><a href="#c-CC" class="c-link">0xCC comparehiddenvar</a></li>
+               <li><a href="#c-CD" class="c-link">0xCD setobedience</a></li>
+               <li><a href="#c-CE" class="c-link">0xCE checkobedience</a></li>
+               <li><a href="#c-CF" class="c-link">0xCF executeram</a></li>
+               <li><a href="#c-D0" class="c-link">0xD0 setworldmapflag</a></li>
+               <li><a href="#c-D1" class="c-link">0xD1 warpteleport2</a></li>
+               <li><a href="#c-D2" class="c-link">0xD2 setcatchlocation</a></li>
+               <li><a href="#c-D3" class="c-link">0xD3 braille2</a> (acts like "getbraillewidth")</li>
+               <li><a href="#c-D4" class="c-link">0xD4 bufferitems</a></li>
+               <li><a href="#c-D5" class="c-link">0xD5 cmdd5</a> (nop)</li>
+            </ol>
+            <div id="command-list-summary" class="js-only">
+               <i><b></b><u></u></i>
+               <span>X complete out of Y documented out of Z</span>
+            </div>
+         </li>
+         <li>
+            <a href="#appendix">Appendix</a>
+               <ul>
+                  <li><a href="#appendix-comparisons">Comparison operators</a></li>
+                  <li><a href="#appendix-dialogs">Dialog boxes</a></li>
+                  <li><a href="#appendix-command-asm">Finding the offset of a command's ASM (FireRed)</a></li>
+                  <li><a href="#appendix-hidden-vars">Hidden variables</a></li>
+                  <li><a href="#appendix-person">Person event terminology</a></li>
+                  <li><a href="#appendix-banks">Script banks</a></li>
+                  <li><a href="#appendix-std">Standard functions</a></li>
+                  <li><a href="#appendix-rematchtable">Trainer battles: the rematch flag table</a></li>
+               </ul>
+         </li>
+      </ol>
+      <hr>
+      <h2><a name="data-types">List of data types</a></h2>
+      <dl>
+         <dt>byte</dt>
+            <dd><p>A single-byte value.</p></dd>
+         <dt>word</dt>
+            <dd><p>A two-byte value.</p></dd>
+         <dt>dword</dt>
+            <dd><p>A four-byte value.</p></dd>
+         <dt>pointer</dt>
+            <dd><p>A dword. The value should be the offset (in ROM or RAM) of some piece of data that the command needs.</p></dd>
+         <dt>variable</dt>
+            <dd>
+               <p>The two-byte numeric identifier of any valid script variable; that is, a word value greater than <code>0x3FFF</code>.</p>
+               <p>In most cases, commands that accept variables will extract the variables' values and use those values as input. Sometimes, a command will actually act on the variable itself rather than on its value (i.e. <a href="#c-16" class="c-link">setvar</a>).</p>
+               <p>It should be noted that variables <code>0x5084</code> to <code>0x7FFF</code> are not actually valid scripting variables, and modifying them may overwrite game data (including Pok&eacute;mon stored in the PC).<a href="#var-limits-pc" class="source-link">[source]</a> Variables <code>0x4100</code> to <code>0x4180</code> may also be unsafe; a list of all safe variables hasn't been created yet.</p>
+			<p><span class="comment">Check out <a href="http://www.pokecommunity.com/showthread.php?t=302347" target="_blank">this document by karatekid552</a> on safe variables and flags.</span>
+		   </dd>
+         <dt>flag</dt>
+            <dd>
+               <p>The two-byte numeric identifier of any valid script flag; that is, a word value lower than <code>0x0900</code>.</p>
+               <p>It should be noted that many flags have been reserved by the game engine. Flags <code>0x500</code> to <code>0x700</code> are trainer flags, flags <code>0x890</code> to <code>0x8FD</code> are world map flags, and many others are used as well.</p>
+            </dd>
+         <dt>bank</dt>
+            <dd>
+               <p>The single-byte numeric identifier of one of the four zero-indexed <a href="#appendix-banks">script banks</a>.</p>
+            </dd>
+         <dt>buffer</dt>
+            <dd>
+               <p>The single-byte numeric identifier of one of the three zero-indexed string buffers.</p>
+            </dd>
+         <dt>hidden-variable</dt>
+            <dd>
+               <p>The single-byte numeric identifier of one of the game's 64 <a href="#appendix-hidden-vars">hidden variables</a>.</p>
+            </dd>
+         <dt>pointer-or-bank</dt>
+            <dd><p>If the supplied argument is between <code>0x00000000</code> and <code>0x00000003</code> (inclusive), then it will be treated as a reference to a script bank. Otherwise, it is treated as a four-byte pointer to data.</p></dd>
+         <dt>pointer-or-bank-0</dt>
+            <dd><p>A pointer or script bank 0 may be used, but the other script banks may not be used.</p></dd>
+         <dt>flag-or-variable</dt>
+            <dd><p>If the supplied argument is a variable, then the game will use its value to locate the proper flag. Otherwise, the argument itself is treated as a flag identifier.</p></dd>
+         <dt>word-or-variable</dt>
+            <dd><p>If the supplied argument is a variable, then the game will extract that variable's value and use that as the input. Otherwise, the argument itself becomes the input.</p></dd>
+         <dt>byte-or-variable</dt>
+            <dd><p>If the supplied argument is a variable, then the game will extract that variable's value and use that as the input. Otherwise, the argument itself becomes the input. Either way, the input must be a word but is converted to a single-byte value (all bytes except the least-significant byte are discarded; <code>0xYYZZ</code> -> <code>0x00ZZ</code>).</p></dd>
+      </dl>
+      <hr>
+      <h2><a name="commands">List of script commands</a></h2>
+      <ol id="list">
+         <li data-type="nop">
+            <a name="c-00"></a>
+            <h3>00 nop</h3>
+            <p>Does nothing.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-01"></a>
+            <h3>01 nop1</h3>
+            <p>Does nothing.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-02"></a>
+            <h3>02 end</h3>
+            <p>Terminates script execution.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-03"></a>
+            <h3>03 return</h3>
+            <p>Jumps back to after the last-executed <a href="#c-04" class="c-link">call</a> statement, and continues script execution from there.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-04"></a>
+            <h3>04 call</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> destination</li>
+               </ul>
+            </div>
+            <p>Jumps to <code>destination</code> and continues script execution from there. The location of the calling script is remembered and can be <a href="#c-03" class="c-link">return</a>ed to later.</p>
+            <p>The maximum script depth (that is, the maximum nested calls you can make) is 20. When this limit is reached, the game starts treating <code>call</code> as <a href="#c-05" class="c-link">goto</a>.<a href="#max-call-depth" class="source-link">[source]</a></p>
+         </li>
+         <li data-type="logic">
+            <a name="c-05"></a>
+            <h3>05 goto</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> destination</li>
+               </ul>
+            </div>
+            <p>Jumps to <code>destination</code> and continues script execution from there.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-06"></a>
+            <h3>06 if1</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> condition</li>
+                  <li><span>pointer</span> destination</li>
+               </ul>
+            </div>
+            <p>If the result of the last comparison matches <code>condition</code> (see <a href="#appendix-comparisons">Comparison operators</a>), jumps to <code>destination</code> and continues script execution from there.</p>
+            <p>XSE automatically converts the slightly-more-readable form <code>if <var>condition</var> goto <var>pointer</var></code> to an <code>if1</code>.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-07"></a>
+            <h3>07 if2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> condition</li>
+                  <li><span>pointer</span> destination</li>
+               </ul>
+            </div>
+            <p>If the result of the last comparison matches <code>condition</code> (see <a href="#appendix-comparisons">Comparison operators</a>), <a href="#c-04" class="c-link">call</a>s <code>destination</code>.</p>
+            <p>XSE automatically converts the slightly-more-readable form <code>if <var>condition</var> call <var>pointer</var></code> to an <code>if2</code>.</p>
+         </li>
+         <li data-type="std" class="group-start">
+            <a name="c-08"></a>
+            <h3>08 gotostd</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> function</li>
+               </ul>
+            </div>
+            <p>Jumps to the <a href="#appendix-std">standard function</a> at index <code>function</code>.</p>
+         </li>
+         <li data-type="std" class="group-mid">
+            <a name="c-09"></a>
+            <h3>09 callstd (a.k.a. boxset)</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> function</li>
+               </ul>
+            </div>
+            <p><a href="#c-04" class="c-link">Call</a>s the <a href="#appendix-std">standard function</a> at index <code>function</code>.</p>
+         </li>
+         <li data-type="std" class="group-mid">
+            <a name="c-0A"></a>
+            <h3>0A gotostdif</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> condition</li>
+                  <li><span>byte</span> function</li>
+               </ul>
+            </div>
+            <p>If the result of the last comparison matches <code>condition</code> (see <a href="#appendix-comparisons">Comparison operators</a>), jumps to the <a href="#appendix-std">standard function</a> at index <code>function</code>.</p>
+         </li>
+         <li data-type="std" class="group-end">
+            <a name="c-0B"></a>
+            <h3>0B callstdif</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> condition</li>
+                  <li><span>byte</span> function</li>
+               </ul>
+            </div>
+            <p>If the result of the last comparison matches <code>condition</code> (see <a href="#appendix-comparisons">Comparison operators</a>), <a href="#c-04" class="c-link">call</a>s the <a href="#appendix-std">standard function</a> at index <code>function</code>.</p>
+         </li>
+         <li>
+            <a name="c-0C"></a>
+            <h3>0C jumpram [details needed]</h3>
+            <p>Executes a script stored in a default RAM location.</p>
+         </li>
+         <li>
+            <a name="c-0D"></a>
+            <h3>0D killscript [details needed]</h3>
+            <p>Terminates script execution and "resets the script RAM".</p>
+         </li>
+         <li>
+            <a name="c-0E"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A275</span>
+            <h3>0E setbyte [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> value</li>
+               </ul>
+            </div>
+            <p>Pads the specified value to a dword, and then writes that dword to a predefined address (<code>0x0203AAA8</code>).</p>
+            <p>(What does that RAM offset do?)</p>
+         </li>
+         <li data-type="banks">
+            <a name="c-0F"></a>
+            <h3>0F loadpointer</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> destination</li>
+                  <li><span>dword</span> value</li>
+               </ul>
+            </div>
+            <p>Sets the specified <a href="#appendix-banks">script bank</a> to <code>value</code>.</p>
+            <p>(The function is named "loadpointer" because it was originally used to store pointers to strings in script banks, in preparation for certain dialog box-related standard functions. "Setbank" would have been a better name.)</p>
+         </li>
+         <li data-type="banks">
+            <a name="c-10"></a>
+            <h3>10 setbyte2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> destination</li>
+                  <li><span>byte</span> value</li>
+               </ul>
+            </div>
+            <p>Sets the specified <a href="#appendix-banks">script bank</a> to <code>value</code>.</p>
+         </li>
+         <li>
+            <a name="c-11"></a>
+            <h3>11 writebytetooffset</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> value</li>
+                  <li><span>pointer</span> offset</li>
+               </ul>
+            </div>
+            <p>Sets the byte at <code>offset</code> to <code>value</code>.</p>
+         </li>
+         <li data-type="banks">
+            <a name="c-12"></a>
+            <h3>12 loadbytefrompointer</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> destination</li>
+                  <li><span>pointer</span> source</li>
+               </ul>
+            </div>
+            <p>Copies the byte value at <code>source</code> into the specified <a href="#appendix-banks">script bank</a>.</p>
+         </li>
+         <li data-type="banks">
+            <a name="c-13"></a>
+            <h3>13 setfarbyte [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> source</li>
+                  <li><span>pointer</span> destination</li>
+               </ul>
+            </div>
+            <p>Not sure. Judging from XSE's description I <em>think</em> it takes the least-significant byte in bank <code>source</code> and writes it to <code>destination</code>.</p>
+         </li>
+         <li data-type="banks">
+            <a name="c-14"></a>
+            <h3>14 copyscriptbanks</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> destination</li>
+                  <li><span>bank</span> source</li>
+               </ul>
+            </div>
+            <p>Copies the contents of bank <code>source</code> into bank <code>destination</code>.</p> <!-- It copies the ENTIRE value, not just the least-significant bytes. -->
+         </li>
+         <li>
+            <a name="c-15"></a>
+            <h3>15 copybyte</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> destination</li>
+                  <li><span>pointer</span> source</li>
+               </ul>
+            </div>
+            <p>Copies the byte at <code>source</code> to <code>destination</code>, replacing whatever byte was previously there.</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-16"></a>
+            <h3>16 setvar</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> destination</li>
+                  <li><span>word</span> value</li>
+               </ul>
+            </div>
+            <p>Changes the value of <code>destination</code> to <code>value</code>.</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-17"></a>
+            <h3>17 addvar</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> destination</li>
+                  <li><span>word</span> value</li>
+               </ul>
+            </div>
+            <p>Changes the value of <code>destination</code> by adding <code>value</code> to it. Overflow is not prevented (<code>0xFFFF</code> + <code>1</code> = <code>0x0000</code>).</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-18"></a>
+            <h3>18 subvar</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> destination</li>
+                  <li><span>word-or-variable</span> value</li>
+               </ul>
+            </div>
+            <p>Changes the value of <code>destination</code> by subtracting <code>value</code> to it. Overflow is not prevented (<code>0x0000</code> - <code>1</code> = <code>0xFFFF</code>).</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-19"></a>
+            <h3>19 copyvar</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> destination</li>
+                  <li><span>variable</span> source</li>
+               </ul>
+            </div>
+            <p>Copies the value of <code>source</code> into <code>destination</code>.</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-1A"></a>
+            <h3>1A copyvarifnotzero</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> destination</li>
+                  <li><span>word-or-variable</span> source</li>
+               </ul>
+            </div>
+            <p>If <code>source</code> is not a variable, then this function acts like <a href="#c-18" class="c-link">setvar</a>. Otherwise, it acts like <a href="#c-19" class="c-link">copyvar</a>.</p>
+            <p>("Copyvarifnotzero" is a misnomer. This function was previously thought to act like copyvar if <code>source</code> was a variable with a non-zero value, and to do nothing otherwise.)</p>
+         </li>
+         <li data-type="banks,comparisons">
+            <a name="c-1B"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A42D</span>
+            <h3>1B comparebanks</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> a</li>
+                  <li><span>bank</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the values of script banks <code>a</code> and <code>b</code>, after forcing the values to bytes.</p>
+            <p><strong>Warning: XSE has it wrong. The arguments are bytes, not words. This means that you will need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="banks,comparisons">
+            <a name="c-1C"></a>
+            <h3>1C comparebanktobyte</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> a</li>
+                  <li><span>byte</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the least-significant byte of the value of script bank <code>a</code> to a fixed byte value (<code>b</code>).</p>
+         </li>
+         <li data-type="banks,comparisons">
+            <a name="c-1D"></a>
+            <h3>1D comparebanktofarbyte</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>bank</span> a</li>
+                  <li><span>pointer</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the least-significant byte of the value of script bank <code>a</code> to the byte located at offset <code>b</code>.</p>
+         </li>
+         <li data-type="banks,comparisons">
+            <a name="c-1E"></a>
+            <h3>1E comparefarbytetobank</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> a</li>
+                  <li><span>bank</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the byte located at offset <code>a</code> to the least-significant byte of the value of script bank <code>b</code>.</p>
+         </li>
+         <li data-type="comparisons">
+            <a name="c-1F"></a>
+            <h3>1F comparefarbytetobyte</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> a</li>
+                  <li><span>byte</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the byte located at offset <code>a</code> to a fixed byte value (<code>b</code>).</p>
+         </li>
+         <li data-type="comparisons">
+            <a name="c-20"></a>
+            <h3>20 comparefarbytes</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> a</li>
+                  <li><span>pointer</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the byte located at offset <code>a</code> to the byte located at offset <code>b</code>.</p>
+         </li>
+         <li data-type="comparisons,variables">
+            <a name="c-21"></a>
+            <h3>21 compare</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> a</li>
+                  <li><span>word</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the value of <code>a</code> to a fixed word value (<code>b</code>).</p>
+         </li>
+         <li data-type="comparisons,variables">
+            <a name="c-22"></a>
+            <h3>22 comparevars</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> a</li>
+                  <li><span>variable</span> b</li>
+               </ul>
+            </div>
+            <p>Compares the value of <code>a</code> to the value of <code>b</code>.</p>
+         </li>
+         <li data-type="blocking">
+            <a name="c-23"></a>
+            <h3>23 callasm</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> code</li>
+               </ul>
+            </div>
+            <p>Calls the ASM routine stored at <code>code</code>. Script execution is blocked until the ASM returns (<code>bx lr</code>, <code>mov pc, lr</code>, etc.). Remember to add 1 to the offset when calling THUMB code.</p>
+         </li>
+         <li data-type="">
+            <a name="c-24"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x08069EE5</span>
+            <h3>24 cmd24 [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> asm_pointer</li>
+               </ul>
+            </div>
+            <p>Replaces a pointer in the script engine RAM with <code>asm_pointer</code>.</p>
+            <p>(The pointer points to a THUMB routine... What effect does replacing it have?)</p>
+         </li>
+         <li>
+            <a name="c-25"></a>
+            <h3>25 special</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> function</li>
+               </ul>
+            </div>
+            <p>Calls a special function; that is, a piece of ASM code designed for use by scripts and listed in a table of pointers.</p>
+            <p>The special table is located at <code>0x0815FD60</code>.</p>
+         </li>
+         <li>
+            <a name="c-26"></a>
+            <h3>26 special2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> output</li>
+                  <li><span>word</span> function</li>
+               </ul>
+            </div>
+            <p>Calls a special function. That function's output (if any) will be written to the variable you specify.</p>
+         </li>
+         <li data-type="blocking">
+            <a name="c-27"></a>
+            <h3>27 waitstate [details needed]</h3>
+            <p>Blocks script execution until a command or ASM code manually unblocks it. Generally used with specific commands and specials. If this command runs, and a subsequent command or piece of ASM does not unblock state, the script will remain blocked indefinitely (essentially a hang).</p>
+         </li>
+         <li data-type="blocking,timing">
+            <a name="c-28"></a>
+            <h3>28 pause [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> time</li>
+               </ul>
+            </div>
+            <p>Blocks script execution for <code>time</code> (frames? milliseconds?).</p>
+            <p>A value of <code>0x0010</code> represents the amount of time it takes for a walking NPC to move one tile (i.e. dec 16 pixels).</p>
+         </li>
+         <li data-type="flags" class="group-start">
+            <a name="c-29"></a>
+            <h3>29 setflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>flag-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>Sets <code>a</code> to 1.</p>
+         </li>
+         <li data-type="flags" class="group-mid">
+            <a name="c-2A"></a>
+            <h3>2A clearflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>flag-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>Sets <code>a</code> to 0.</p>
+         </li>
+         <li data-type="comparisons,flags" class="group-end">
+            <a name="c-2B"></a>
+            <h3>2B checkflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>flag-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>Compares <code>a</code> to 1.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-2C"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A9D5</span>
+            <h3>2C cmd2c</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <p><strong>Warning: XSE has it wrong. The function has no arguments. This means that you may need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="nop">
+            <a name="c-2D"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A9D9</span>
+            <h3>2D checkdailyflags</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <hr>
+            <p>In R/S/E, it had something to do with flags and the real-time clock.</p>
+         </li>
+         <li data-type="variables">
+            <a name="c-2E"></a>
+            <h3>2E resetvars</h3>
+            <p>Resets the values of variables 0x8000, 0x8001, and 0x8002. Related to RTC in RSE?</p>
+         </li>
+         <li data-type="sound" class="group-start">
+            <a name="c-2F"></a>
+            <h3>2F sound</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> sound_number</li> <!-- does not accept a variable -->
+               </ul>
+            </div>
+            <p>Plays the specified (<code>sound_number</code>) sound. Only one sound may play at a time, with newer ones interrupting older ones.</p>
+            <p>If you specify sound <code>0x0000</code>, then all music will be muted. If you specify the number of a non-existent sound, no new sound will be played, and currently-playing sounds will not be interrupted. A comprehensive list of sound numbers may be found <a href="http://www.pokecommunity.com/showpost.php?p=5610866&postcount=3">on PokeCommunity</a>.</p>
+            <p>Note that when using older versions of VisualBoyAdvance, the sound channel used for this command (and, sometimes, in music) will be completely muted after loading from a savestate.</p>
+         </li>
+         <li data-type="blocking,sound,timing" class="group-end">
+            <a name="c-30"></a>
+            <h3>30 checksound [details needed]</h3>
+            <p>Blocks script execution until the currently-playing sound (triggered by <a href="#c-2F" class="c-link">sound</a>) finishes playing.</p>
+            <p>(Does this also block until cries finish playing? The manner in which it's used by default scripts suggests that it might.)</p>
+         </li>
+         <li data-type="sound" class="group-start">
+            <a name="c-31"></a>
+            <h3>31 fanfare [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> fanfare_number</li>
+               </ul>
+            </div>
+            <p>Plays the specified (<code>fanfare_number</code>) fanfare.</p>
+            <p>(Is it limited to one fanfare at a time, like sound?)</p>
+         </li>
+         <li data-type="blocking,sound,timing" class="group-end">
+            <a name="c-32"></a>
+            <h3>32 waitfanfare</h3>
+            <p>Blocks script execution until all currently-playing fanfares finish.</p>
+         </li>
+         <li data-type="sound" class="group-start">
+            <a name="c-33"></a>
+            <h3>33 playsong [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> song_number</li>
+                  <li><span>byte</span> unknown</li>
+               </ul>
+            </div>
+            <p>Plays the specified (<code>song_number</code>) song. The byte is apparently supposed to be <code>0x00</code>.</p>
+            <p>(I need to test this command to see it has any quirks... And does it accept a variable?)</p>
+         </li>
+         <li data-type="sound" class="group-end">
+            <a name="c-34"></a>
+            <h3>34 playsong2 [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> song_number</li>
+               </ul>
+            </div>
+            <p>Plays the specified (<code>song_number</code>) song.</p>
+            <p>(I need to test this command to see it has any quirks... Among other things, it's failed to work for me in situations where playsong has worked. And does it accept a variable?)</p>
+         </li>
+         <li data-type="sound" class="group-start">
+            <a name="c-35"></a>
+            <h3>35 fadedefault [details needed]</h3>
+            <p>Crossfades the currently-playing song into the map's default song.</p>
+            <p>(I need to test this command to see it has any quirks...)</p>
+         </li>
+         <li data-type="sound" class="group-mid">
+            <a name="c-36"></a>
+            <h3>36 fadesong [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> song_number</li>
+               </ul>
+            </div>
+            <p>Crossfades the currently-playng song into the specified (<code>song_number</code>) song.</p>
+            <p>(I need to test this command to see it has any quirks... And does it accept a variable?)</p>
+         </li>
+         <li data-type="sound" class="group-mid">
+            <a name="c-37"></a>
+            <h3>37 fadeout [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> speed</li>
+               </ul>
+            </div>
+            <p>Fades out the currently-playing song.</p>
+            <p>(I need to test this command to see it has any quirks... And what unit of measurement is used for <code>speed</code>? And does it accept a variable?)</p>
+         </li>
+         <li data-type="sound" class="group-end">
+            <a name="c-38"></a>
+            <h3>38 fadein [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> speed</li>
+               </ul>
+            </div>
+            <p>Fades the currently-playing song back in.</p>
+            <p>(I need to test this command to see it has any quirks... And what unit of measurement is used for <code>speed</code>? And does it accept a variable?)</p>
+         </li>
+         <li data-type="warping" class="group-start">
+            <a name="c-39"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AA65</span>
+            <h3>39 warp [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> bank</li>
+                  <li><span>byte</span> map</li>
+                  <li><span>byte</span> warp</li>
+                  <li><span>byte-or-variable</span> X</li>
+                  <li><span>byte-or-variable</span> Y</li>
+               </ul>
+            </div>
+            <p>Sends the player to Warp <code>warp</code> on Map <code>bank</code>.<code>map</code>. If the specified <code>warp</code> is <code>0xFF</code>, then the player will instead be sent to (<code>X</code>, <code>Y</code>) on the map.</p>
+            <p>This command will also play Sappy song 0x0009, but only if the bytes at 0x02031DD8 and 0x0203ADFA are not equal to 0x00 and 0x02, respectively.</p>
+            <p>(Function terminates script execution?)</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3A"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AAED</span>
+            <h3>3A warpmuted</h3>
+            <p>Clone of <a href="#c-39" class="c-link">warp</a> that does not play a sound effect.</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3B"></a>
+            <h3>3B warpwalk [details needed]</h3>
+            <p>Clone of <a href="#c-39" class="c-link">warp</a> that uses "a walking effect".</p>
+            <p>(Any other differences?)</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3C"></a>
+            <h3>3C warphole [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> bank</li>
+                  <li><span>byte</span> map</li>
+               </ul>
+            </div>
+            <p>Warps the player to another map using a hole animation.</p>			
+			<p><span class="comment">Warps to the same X,Y co-ords as the player's when activated.</span></p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3D"></a>
+            <h3>3D warpteleport [details needed]</h3>
+            <p>Clone of <a href="#c-39" class="c-link">warp</a> that uses a teleport effect. It is apparently only used in R/S/E.<a href="#warpteleport-use-cases" class="source-link">[source]</a></p>
+            <p>(Any other differences?)</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3E"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AD8D</span>
+            <h3>3E warp3 [details needed]</h3>
+            <p>Clone of <a href="#c-39" class="c-link">warp</a>. Used by an (unused?) Safari Zone script to return the player to the gatehouse and end the Safari Game.</p>
+            <p>The only difference between this and <code>warp</code>/<a href="#c-3A" class="c-link">warpmuted</a> are that those two commands write <code>01 01 00</code> to <code>0x02031DD4</code> when they finish, but this command does not. I don't yet know what this difference means.</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-3F"></a>
+            <h3>3F setwarpplace [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> bank</li>
+                  <li><span>byte</span> map</li>
+                  <li><span>byte</span> warp</li>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+               </ul>
+            </div>
+            <p>Sets a default warp place. If a warp tries to send the player to Warp 127 on Map 127.127, they will instead be sent here. Useful when a map has warps that need to go to script-controlled locations (i.e. elevators).</p>
+            <p>(Does this accept variables for X and Y?)</p>
+         </li>
+         <li data-type="warping" class="group-mid">
+            <a name="c-40"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AE91</span>
+            <h3>40 warp4 [details needed]</h3>
+            <p>Clone of <a href="#c-3E" class="c-link">warp3</a>, except that this writes data to different offsets...</p>
+            <p>With normal warp commands, the stats for the map being entered replace data starting at <code>0x02031DBC</code> (RAM: current map)... But this warp command instead writes to <code>0x02031DC4</code>.</p>
+            <p>(With that in mind, could this have been used internally for DIVE?)</p>
+         </li>
+         <li data-type="warping" class="group-end">
+            <a name="c-41"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AF11</span>
+            <h3>41 warp5 [details needed]</h3>
+            <p>Clone of <a href="#c-3E" class="c-link">warp3</a>, except that this writes data to different offsets...</p>
+            <p>With normal warp commands, the stats for the map being entered replace data starting at <code>0x02031DBC</code> (RAM: current map)... But this warp command instead writes to <code>0x02031DCC</code>.</p>
+            <p>(With that in mind, could this have been used internally for DIVE?)</p>
+         </li>
+         <li data-type="map">
+            <a name="c-42"></a>
+            <h3>42 getplayerpos</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>variable</span> X</li>
+                  <li><span>variable</span> Y</li>
+               </ul>
+            </div>
+            <p>Retrieves the player's zero-indexed X- and Y-coordinates in the map, and stores them in the specified variables.</p>
+         </li>
+         <li>
+            <a name="c-43"></a>
+            <h3>43 countPok&eacute;mon</h3>
+            <p>Retrieves the number of Pok&eacute;mon in the player's party, and stores that number in variable 0x800D (LASTRESULT).</p>
+         </li>
+         <li data-type="items" class="group-start">
+            <a name="c-44"></a>
+            <h3>44 additem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>byte-or-variable</span> quantity</li>
+               </ul>
+            </div>
+            <p>Attempts to add <code>quantity</code> of item <code>index</code> to the player's Bag. If the player has enough room, the item will be added and variable 0x800D (LASTRESULT) will be set to 0x0001; otherwise, LASTRESULT is set to 0x0000.</p>
+         </li>
+         <li data-type="items" class="group-mid">
+            <a name="c-45"></a>
+            <h3>45 removeitem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>byte-or-variable</span> quantity</li>
+               </ul>
+            </div>
+            <p>Removes <code>quantity</code> of item <code>index</code> from the player's Bag.</p>
+            <p>If you attempt to remove more of the item than the player actually has, then this command will do absolutely nothing, and they will keep the item. (For example, attempting to remove 6 Master Balls when the player only has 5 will result in them keeping all 5.)</p>
+         </li>
+         <li data-type="items" class="group-mid">
+            <a name="c-46"></a>
+            <h3>46 checkitemroom</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>byte-or-variable</span> quantity</li>
+               </ul>
+            </div>
+            <p>Checks if the player has enough space in their Bag to hold <code>quantity</code> more of item <code>index</code>. Sets variable 0x800D (LASTRESULT) to 0x0001 if there is room, or 0x0000 is there is no room.</p>
+         </li>
+         <li data-type="items" class="group-mid">
+            <a name="c-47"></a>
+            <h3>47 checkitem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>byte-or-variable</span> quantity</li>
+               </ul>
+            </div>
+            <p>Checks if the player has <code>quantity</code> or more of item <code>index</code> in their Bag. Sets variable 0x800D (LASTRESULT) to 0x0001 if the player has enough of the item, or 0x0000 if they have fewer than <code>quantity</code> of the item.</p>
+         </li>
+         <li data-type="items" class="group-end">
+            <a name="c-48"></a>
+            <h3>48 checkitemtype</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+               </ul>
+            </div>
+            <p>Checks which Bag pocket the specified (<code>index</code>) item belongs in, and writes the value to variable 0x800D (LASTRESULT). This script is used to show the name of the proper Bag pocket when the player receives an item via <a href="#c-09" class="c-link">callstd</a> (simplified to <code>giveitem</code> in XSE).</p>
+            <p>Return values:</p>
+            <ol class="height-limited no-auto-numbering">
+               <li><code>0x0001</code> Items Pocket</li>
+               <li><code>0x0002</code> Key Items Pocket</li>
+               <li><code>0x0003</code> Poke Balls Pocket</li>
+               <li><code>0x0004</code> TM Case</li>
+               <li><code>0x0005</code> Berry Pouch</li>
+            </ol>
+         </li>
+
+         <li data-type="items" class="group-end">
+            <a name="c-49"></a>
+            <h3>49 addpcitem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>word-or-variable</span> quantity</li>    
+               </ul>
+            </div>
+            <p>Adds a <code>quantity</code> amount of item <code>index</code> to the player's PC. Both arguments can be variables.</p>
+            </li>
+
+         <li data-type="items" class="group-end">
+            <a name="c-4A"></a>
+            <h3>4a checkpcitem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> index</li>
+                  <li><span>word-or-variable</span> quantity</li>    
+               </ul>
+            </div>
+            <p>Checks for <code>quantity</code> amount of item <code>index</code> in the player's PC. Both arguments can be variables.</p>
+            <p>Return values:</p>
+            </li>
+
+         <li data-type="nop">
+            <a name="c-4B"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A7DD</span>
+            <h3>4B adddecoration</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The argument is read, but not used for anything.)</p>
+            <hr>
+            <p>In R/S/E, it added one of the specified (<code>a</code>) decoration to the player's PC, and stored something in variable 0x800D (LASTRESULT) -- apparently, a value determining whether the decoration was successfully added (<code>0x0001</code>) or not (<code>0x0000</code>).</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-4C"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A7F1</span>
+            <h3>4C removedecoration</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The argument is read, but not used for anything.)</p>
+            <hr>
+            <p>In R/S/E, it removed one of the specified (<code>a</code>) decoration from the player's PC.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-4D"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A819</span>
+            <h3>4D testdecoration</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The argument is read, but not used for anything.)</p>
+            <hr>
+            <p>In R/S/E, it checked to see if the player's PC could store one more of the specified (<code>a</code>) decoration.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-4E"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A805</span>
+            <h3>4E checkdecoration</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> a</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The argument is read, but not used for anything.)</p>
+            <hr>
+            <p>In R/S/E, it checked to see if the player's PC contained at least one of the specified (<code>a</code>) decoration.</p>
+         </li>
+         <li data-type="map" class="group-start">
+            <a name="c-4F"></a>
+            <h3>4F applymovement</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte-or-variable</span> index</li>
+                  <li><span>pointer</span> movements</li>
+               </ul>
+            </div>
+            <p>Applies the movement data at <code>movements</code> to the specified (<code>index</code>) Person event. Also closes any standard message boxes that are still open.</p>
+            <p>Indices <code>0xFF</code> and <code>0x7F</code> refer to the player and the camera, respectively. Running this command from a Script event will crash the game unless that Script event's "Unknown" field (in AdvanceMap) is "$0003" and its "Var number" field refers to a valid script variable.</p>
+         </li>
+         <li data-type="map" class="group-mid">
+            <a name="c-50"></a>
+            <h3>50 applymovementpos [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> variable containing Person event ID</li>
+                  <li><span>pointer</span> movements</li>
+               </ul>
+            </div>
+            <p><s>Apparent clone of <a href="#c-4F" class="c-link">applymovement</a>. Oddly, it doesn't seem to work at all if applied to any Person other than the player (<code>0xFF</code>), and the <code>X</code> and <code>Y</code> arguments don't seem to do anything.</s><br/>
+			<span class="comment">This command in fact uses variables to access the Person event ID. So, for example, if you setvar 0x8000 to 0x3, and then use applymovementpos 0x8000 @move1, Person event 3 will have the movements at @move1 applied to them. Thank you Shiny Quagsire for bringing this to my attention.</li></p>
+         </li>
+         <li data-type="blocking,map" class="group-mid">
+            <a name="c-51"></a>
+            <h3>51 waitmovement</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte-or-variable</span> index</li>
+               </ul>
+            </div>
+            <p>Blocks script execution until the movements being applied to the specified (<code>index</code>) Person event finish. If the specified Person event is <code>0x0000</code>, then the command will block script execution until all Person events affected by <a href="#c-4F" class="c-link">applymovement</a> finish their movements. If the specified Person event is not currently being manipulated with <code>applymovement</code>, then this command does nothing.</p>
+         </li>
+         <li data-type="blocking,map" class="group-end">
+            <a name="c-52"></a>
+            <h3>52 waitmovementpos [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte-or-variable</span> index</li>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Apparent clone of <a href="#c-51" class="c-link">waitmovement</a>. Oddly, it doesn't seem to work at all if applied to any Person other than the player (<code>0xFF</code>), and the <code>X</code> and <code>Y</code> arguments don't seem to do anything.</p>
+         </li>
+         <li data-type="flags,map" class="group-start">
+            <a name="c-53"></a>
+            <h3>53 hidesprite</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte-or-variable</span> local_ID</li>
+               </ul>
+            </div>
+            <p>Attempts to hide the specified (<code>local_ID</code>, a <a href="#appendix-person">local ID</a>) Person event on the current map, by setting its <a href="#appendix-person">visibility flag</a> if it has a valid one. If the Person does not have a valid visibility flag, this command does nothing.</p>
+            <p>(For example, if Person event no. 7 has a "Person number" of 8 and a "Person ID" of $0015, then <code>hidesprite 0x8</code> will hide that Person event by setting flag <code>0x015</code>.)</p>
+            <p>Supplying a local ID of <code>0xFF</code> (the player) will result in the player taking control of a random Person event on the map, and map drawing will break (drawing chunks of terrain from the player's original position, along with chunks from their new position). This effect lasts until the player exits the map via a warp (I don't know what map connections would do).</p>
+
+            <ul class="gallery">
+               <li class="header">Gallery</li><!--
+            --><li>
+                  <img src="Hidesprite - prior to its usage.png">
+                  Two OWs prior to using hidesprite.
+               </li><!--
+            --><li>
+                  <img src="Hidesprite - script shows the flag change.png">
+                  The change in flags, revealed via script.
+               </li><!--
+            --><li>
+                  <img src="Hidesprite - used on the player.PNG">
+                  Used on the player. Hidesprite gave them control of another Person.
+               </li>
+            </ul>
+         </li>
+         <li data-type="map" class="group-end">
+            <a name="c-54"></a>
+            <h3>54 hidespritepos [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte-or-variable</span> index</li>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Clone of <code>hidesprite</code> that also moves the Person? Test it!</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="map">
+            <a name="c-5A"></a>
+            <h3>5A faceplayer</h3>
+            <p>If the script was called by a Person event, then that Person will turn to face toward the tile that the player is stepping off of.</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="battles,blocking,flags">
+            <a name="c-5C"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C2C5</span>
+            <h3>5C trainerbattle [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> type</li>
+                  <li><span>word</span> index</li>
+                  <li><span>word</span> local_id</li> <!-- local ID of an OW on the map -->
+                  <li><span>pointer</span> intro</li>
+                  <li><span>pointer</span> loss</li>
+                  <li><span>pointer</span> extra</li>
+                  <li><span>pointer</span> extra2</li> <!-- what is this? -->
+               </ul>
+            </div>
+            <p>If the Trainer flag for Trainer <code>index</code> is not set, this command does absolutely nothing.</p>
+            <p>Otherwise, this command will prepare and then <a href="#c-5D">indirectly initiate</a> a trainer battle, blocking script execution until the battle ends. The effects of the battle (and even the number of arguments that the command accepts) differ depending on the first argument (the battle type).</p>
+
+            <p>For <em>most</em> types, if the player defeats the Trainer, then they say the text at <code>loss</code> on the battle screen, their Trainer flag is cleared automatically, and script execution is terminated immediately; if the player loses, they whiteout and script execution terminates.</p>
+            <p>I'm not too sure what the <code>local_id</code> is used for; most battle types "prefer" it set to <code>0x0000</code>, while setting it to <code>0x0003</code> with battle type 9 enables Oak's narration. (Actually, any local ID that, when bitwise-and 3, doesn't equal zero will trigger the narration in a type-9 battle.)</p>
+			<p><span class="comment">trainerbattle 0x2 is not identical to trainerbattle 0x1; the former (0x2) plays encounter music, while the latter (0x1) does not.</span></p>
+            <table class="argument-table centered-cells" border="1">
+               <caption>Arguments and effects depending on type</caption>
+               <thead>
+                  <tr>
+                     <th>Type (hover for info)</th>
+                     <th>intro</th>
+                     <th>loss</th>
+                     <th>extra</th>
+                     <th>extra2</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <th title="This battle type doesn't do anything special.">0 Normal</td>
+                     <td>Pre-battle text</td>
+                     <td>Player win text</td>
+                     <td class="inverse">UNUSED</td>
+                     <td class="inverse">UNUSED</td>
+                  </tr>
+                  <tr>
+                     <th title="This battle type will run a new script after the player wins.">1 Run Script After Win</td>
+                     <td rowSpan="2">Pre-battle text</td>
+                     <td rowSpan="2">Player win text</td>
+                     <td rowSpan="2">Post-battle script offset<br>(run on player win only)</td>
+                     <td class="inverse" rowSpan="2">UNUSED</td>
+                  </tr>
+                  <tr>
+                     <th title="This battle type will run a new script after the player wins. It's an exact copy of Type 1.">2 Run Script After Win</td>
+                  </tr>
+                  <tr>
+                     <th title="This battle type will not terminate the calling script unless the player whites out.">3 Continue Caller</td>
+                     <td>Pre-battle text</td>
+                     <td class="inverse">UNUSED</td>
+                     <td class="inverse">UNUSED</td>
+                     <td class="inverse">UNUSED</td>
+                  </tr>
+                  <tr>
+                     <th title="Double battle! The player won't be allowed to start it unless they have at least two battle-ready Pok&eacute;mon, however.">4 Double</td>
+                     <td>Pre-battle text</td>
+                     <td>Player win text</td>
+                     <td>Not enough PKMN text</td>
+                     <td class="inverse">UNUSED</td>
+                  </tr>
+                  <tr>
+                     <th title="Rematch! This uses the specified flag to locate the earliest usable rematch trainer flag.">5 Rematch</td>
+                     <td colSpan="4">Clone of 00 with rematch functionality.</td>
+                  </tr>
+                  <tr>
+                     <th title="Double battle! I don't know what that seventh argument is used for yet.">6 Double-Special</td>
+                     <td>Pre-battle text</td>
+                     <td>Player win text</td>
+                     <td>Not enough PKMN text</td>
+                     <td>Unknown, but it is used.</td>
+                  </tr>
+                  <tr>
+                     <th title="Rematch! This uses the specified flag to locate the earliest usable rematch trainer flag.">7 Double-Rematch</td>
+                     <td colSpan="4">Clone of 04 with rematch functionality.</td>
+                  </tr>
+                  <tr>
+                     <th title="Double battle! I don't know what that seventh argument is used for yet. It's an exact copy of Type 6.">8 Double-Special</td>
+                     <td colSpan="4">Clone of 06.</td>
+                  </tr>
+                  <tr>
+                     <th title="This battle type will not terminate the calling script, and the player won't white out if they lose. Depending on the local ID specified, Oak may also narrate.">9 Tutorial (Can't Lose)</td>
+                     <td>Pre-battle text</td>
+                     <td>Player win text</td>
+                     <td class="inverse">UNUSED</td>
+                     <td class="inverse">UNUSED</td>
+                  </tr>
+                  <tr>
+                     <th title="Only the above ten battle types are defined. All other values are treated as type-0 battles.">All Other Values</td>
+                     <td colSpan="4">Treated as Type 0.</td>
+                  </tr>
+               </tbody>
+            </table>
+
+            <div class="collapsible-section">
+               <h4>Additional details: rematch battles</h4>
+               <div class="body">
+                  <p>The "Rematch" types check the specified trainer flag. If that trainer has already been battled, the game will use a table (at <code>0x0845318C</code>) to find trainer flags associated with rematches against the trainer. The game will search for the earliest cleared rematch flag; it will then check if that rematch is usable based on...</p>
+                  <ul>
+                     <li>If Flag <code>0x292</code> (flag function not known) is set, rematch 1 is enabled for all trainers.</li>
+                     <li>If Flag <code>0x896</code> (Celadon City world map flag) is set, rematch 2 is enabled for all trainers.</li>
+                     <li>If Flag <code>0x897</code> (Fuchsia City world map flag) is set, rematch 3 is enabled for all trainers.</li>
+                     <li>If Flag <code>0x82C</code> (Elite Four defeated) is set, rematch 4 is enabled for all trainers.</li>
+                     <li>If Flag <code>0x844</code> (R/S/E trading enabled) is set, rematch 5 is enabled for all trainers.</li>
+                  </ul>
+                  <p>If the found rematch flag is usable, then the command uses that flag instead of the specified one, and starts a battle. If the found rematch flag is unusable, or if all rematch flags are set, then no battle begins. Essentially, the game will automatically handle rematches for you based on the player's progress through the game world and on how many times the trainer has been defeated.</p>
+                  <p>If you wish to change which flags enable rematches, you need only edit the dwords at <code>0x0810CCD8</code>, <code>0x0810CCE0</code>, <code>0x0810CCE8</code>, <code>0x0810CCF0</code>, and <code>0x0810CD10</code>. If you wish to modify the rematch table, a <a href="#appendix-rematchtable">section in the Appendix</a> describes its structure and function.</p>
+               </div>
+            </div>
+            <p>(Can the trainer index be a variable? (Check that empirically using an actual script, not ASM examination.) Verify that the unknown word can be used to enable Oak's tutorial narration.)</p>
+         </li>
+
+         <li data-type="battles,blocking">
+            <a name="c-5D"></a>
+            <span class="asm-offset">ASM (FR): 0x0806C2D9</span> <!-- not FULLY investigated -->
+            <h3>5D repeattrainerbattle</h3>
+            <p>Starts a trainer battle using the battle information stored in RAM (usually by <a href="#c-5C" class="c-link">trainerbattle</a>, which actually calls this command behind-the-scenes), and blocks script execution until the battle finishes.</p>
+            <p>If no battle information has been prepared, the player will fight a nameless "PKMN TRAINER" (Aqua Leader Archie's sprite) equipped with a team of ?????????? (null Pok&eacute;mon). The battle type used appears to be <code>0x00</code>, with empty strings used by the trainer.</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="battles,comparisons,flags">
+            <a name="c-60"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C30D</span>
+            <h3>60 checktrainerflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> trainer</li>
+               </ul>
+            </div>
+            <p>Compares Flag <code>(trainer + 0x500)</code> to 1. (If the flag is set, then the trainer has been defeated by the player.)</p>
+         </li>
+         <li data-type="battles,flags">
+            <a name="c-61"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C331</span>
+            <h3>61 cleartrainerflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> trainer</li>
+               </ul>
+            </div>
+            <p>Sets Flag <code>(trainer + 0x500)</code>. (I didn't make a mistake. The command names actually are backwards.)</p>
+         </li>
+         <li data-type="battles,flags">
+            <a name="c-62"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C34D</span>
+            <h3>62 settrainerflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> trainer</li>
+               </ul>
+            </div>
+            <p>Clears Flag <code>(trainer + 0x500)</code>. (I didn't make a mistake. The command names actually are backwards.)</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="blocking,dialogs" class="group-start">
+            <a name="c-66"></a>
+            <h3>66 waitmsg</h3>
+            <p>If a standard message box (or its text) is being drawn on-screen, this command blocks script execution until the box and its text have been fully drawn.</p>
+         </li>
+         <li data-type="dialogs" class="group-mid">
+            <a name="c-67"></a>
+            <h3>67 preparemsg</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer-or-bank-0</span> text</li>
+               </ul>
+            </div>
+            <p>Starts displaying a standard message box containing the specified text. If <code>text</code> is a pointer, then the string at that offset will be loaded and used. If <code>text</code> is script bank 0, then the value of script bank 0 will be treated as a pointer to the text. (You can use <a href="#c-0F" class="c-link">loadpointer</a> to place a string pointer in a script bank.)</p>
+            <p>This function is not blocking; script execution will continue while the message box is still being displayed. Use <a href="#c-66" class="c-link">waitmsg</a> to block.</p>
+         </li>
+         <li data-type="dialogs" class="group-end">
+            <a name="c-68"></a>
+            <h3>68 closeonkeypress</h3>
+            <p>Holds the current message box open until the player presses a key. The message box is then closed.</p>
+         </li>
+         <li class="group-start">
+            <a name="c-69"></a>
+            <h3>69 lockall [details needed]</h3>
+            <p>Ceases movement for all OWs on-screen.</p>
+            <p>(Does this also affect OWs not on-screen? Viewing OAM data at run-time or possibly using a move-camera script could allow us to check.)</p>
+         </li>
+         <li class="group-mid">
+            <a name="c-6A"></a>
+            <h3>6A lock</h3>
+            <p>If the script was called by a Person event, then that Person's movement will cease.</p>
+         </li>
+         <li class="group-mid">
+            <a name="c-6B"></a>
+            <h3>6B releaseall</h3>
+            <p>Resumes normal movement for all OWs on-screen, and closes any standard message boxes that are still open.</p>
+         </li>
+         <li class="group-end">
+            <a name="c-6C"></a>
+            <h3>6C release</h3>
+            <p>If the script was called by a Person event, then that Person's movement will resume. This command also closes any standard message boxes that are still open.</p>
+         </li>
+         <li data-type="blocking">
+            <a name="c-6D"></a>
+            <h3>6D waitkeypress</h3>
+            <p>Blocks script execution until the player presses any key.</p>
+         </li>
+         <li data-type="blocking,dialogs" class="group-start">
+            <a name="c-6E"></a>
+            <h3>6E yesnobox</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Displays a YES/NO multichoice box at the specified coordinates, and blocks script execution until the user makes a selection. Their selection is stored in variable 0x800D (LASTRESULT); <code>0x0000</code> for "NO" or if the user pressed B, and <code>0x0001</code> for "YES".</p>
+         </li>
+         <li data-type="blocking,dialogs" class="group-mid">
+            <a name="c-6F"></a>
+            <h3>6F multichoice</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+                  <li><span>byte</span> list</li>
+                  <li><span>byte</span> B</li>
+               </ul>
+            </div>
+            <p>Displays a multichoice box from which the user can choose a selection, and blocks script execution until a selection is made. Lists of options are predefined and the one to be used is specified with <code>list</code>. If <code>B</code> is set to a non-zero value, then the user will not be allowed to back out of the multichoice with the B button.</p>
+            <p>The user's selection is stored as a zero-indexed integer in variable 0x800D (LASTRESULT). If they backed out with B, LASTRESULT will be <code>0x7F</code>.</p>
+         </li>
+         <li data-type="blocking,dialogs" class="group-mid">
+            <a name="c-70"></a>
+            <h3>70 multichoice2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+                  <li><span>byte</span> list</li>
+                  <li><span>byte</span> default</li>
+                  <li><span>byte</span> B</li>
+               </ul>
+            </div>
+            <p>Displays a multichoice box from which the user can choose a selection, and blocks script execution until a selection is made. Lists of options are predefined and the one to be used is specified with <code>list</code>. The <code>default</code> argument determines the initial position of the cursor when the box is first opened; it is zero-indexed, and if it is too large, it is treated as <code>0x00</code>. If <code>B</code> is set to a non-zero value, then the user will not be allowed to back out of the multichoice with the B button.</p>
+            <p>The user's selection is stored as a zero-indexed integer in variable 0x800D (LASTRESULT). If they backed out with B, LASTRESULT will be <code>0x7F</code>.</p>
+
+            <ul class="gallery fewer-than-three">
+               <li class="header">Gallery</li><!--
+            --><li>
+                  <img src="Multichoice2 - default is 0x1.PNG">
+                  <code>0x01</code> was the default.
+               </li><!--
+            --><li>
+                  <img src="Multichoice2 - default is 0x5.png">
+                  <code>0x05</code> was the default.
+               </li><!--
+            --><li>
+                  <img src="Multichoice2 - invalid default.PNG">
+                  <code>0x06</code> was the default.
+               </li>
+            </ul>
+         </li>
+         <li data-type="blocking,dialogs" class="group-end">
+            <a name="c-71"></a>
+            <h3>71 multichoice3</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+                  <li><span>byte</span> list</li>
+                  <li><span>byte</span> per_row</li>
+                  <li><span>byte</span> B</li>
+               </ul>
+            </div>
+            <p>Displays a multichoice box from which the user can choose a selection, and blocks script execution until a selection is made. Lists of options are predefined and the one to be used is specified with <code>list</code>. The <code>per_row</code> argument determines how many list items will be shown on a single row of the box.</p>
+            <p>The total number of options must be divisible by the number of options per row. "<a href="http://en.wikipedia.org/wiki/Widows_and_orphans">Orphaned</a>" options will not be displayed or selectable. If the number of options per row is greater than the total number of options, then no choices will be visible or selectable.</p>
+            <p>The user's selection is stored as a zero-indexed integer in variable 0x800D (LASTRESULT). If they backed out with B, LASTRESULT will be <code>0x7F</code>.</p>
+
+            <ul class="gallery">
+               <li class="header">Gallery</li><!--
+            --><li>
+                  <img src="Multichoice3 - valid options per row.PNG">
+                  Valid number of options per row.
+               </li><!--
+            --><li>
+                  <img src="Multichoice3 - orphaned options per row.PNG">
+                  Orphaned options become unusable.
+               </li><!--
+            --><li>
+                  <img src="Multichoice3 - too many options per row (one extra).PNG">
+                  One too many options per row.
+               </li><!--
+            --><li>
+                  <img src="Multichoice3 - too many options per row.PNG">
+                  Three too many options per row.
+               </li>
+            </ul>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="dialogs" class="group-start">
+            <a name="c-75"></a>
+            <h3>75 showpokepic</h3>
+            <img class="thumb" src="Showpokepic.png">
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> species</li>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Displays a box containing the front sprite for the specified (<code>species</code>) Pok&eacute;mon species.</p>
+         </li>
+         <li data-type="dialogs" class="group-end">
+            <a name="c-76"></a>
+            <h3>76 hidepokepic</h3>
+            <p>Hides all boxes displayed with <a href="#c-75" class="c-link">showpokepic</a>.</p>
+            <p>If this command is called too quickly after <code>showpokepic</code>, then it will fail to hide the Pok&eacute;mon picture box <em>and</em> it will hang the script engine. My guess is that problems specifically happen if this command runs while the game is still trying to draw the <code>showpokepic</code> box.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-77"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806BBF9</span>
+            <h3>77 showcontestwinner</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> a</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The argument is discarded.)</p>
+            <hr>
+            <p>In R/S/E, it displayed the paintaing of the winner of the specified (<code>a</code>) Pok&eacute;mon Contest.</p>
+         </li>
+         <li data-type="dialogs">
+            <a name="c-78"></a>
+            <h3>78 braille</h3>
+            <img class="thumb" src="Braille.png">
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer-or-bank-0</span> text</li>
+               </ul>
+            </div>
+            <p>Displays the string at <code>pointer</code> as braille text in a standard message box. The string must be formatted to use braille characters.</p>
+            <p>Note that the <code>\l</code> and <code>\p</code> string control codes are not supported, and braille text is too large to use <code>\n</code>. To show multi-line or multi-part braille messages, you must use a clever scripting technique involving the <a href="#c-D3" class="c-link">braille2</a> command. You can see the script technique if you decompile Signpost scripts used in the Ruby and Sapphire chambers in Mt. Ember.</p>
+         </li>
+         <li>
+            <a name="c-79"></a>
+            <h3>79 givePok&eacute;mon [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> species</li>
+                  <li><span>byte</span> level</li>
+                  <li><span>word</span> item</li>
+                  <li><span>dword</span> unknown1</li>
+                  <li><span>dword</span> unknown2</li>
+                  <li><span>byte</span> unknown3</li>
+               </ul>
+            </div>
+            <p>Gives the player one of the specified (<code>species</code>) Pok&eacute;mon at level <code>level</code> holding <code>item</code>. The unknown arguments should all be zeroes.</p>
+            <p>This function will also modify certain script variables to indicate the result of the command. Variable 0x800D (LASTRESULT) will be set to <code>0x0000</code> if the Pok&eacute;mon was stored in the party; <code>0x0001</code> if the Pok&eacute;mon was transferred to the PC; and <code>0x0002</code> if there was no room in the party or the PC. Variable 0x4037 <em>appears</em> to be set to the number of the PC Box that the Pok&eacute;mon was sent to (if it was boxed). Flag 0x843 <em>may</em> be cleared (and then set) if the Pok&eacute;mon was boxed.</p>
+            <p>(Confirm that this command specifically modifies var 0x4037.)</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="battles">
+            <a name="c-7C"></a>
+            <h3>7C checkattack [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> index</li>
+               </ul>
+            </div>
+            <p>Checks if at least one Pok&eacute;mon in the player's party knows the specified (<code>index</code>) attack. If so, variable 0x800D (LASTRESULT) is set to the (zero-indexed) slot number of the Pok&eacute;mon that knows the move. If not, LASTRESULT is set to <code>0x0006</code>.</p>
+            <p>(Does this accept a variable? If multiple Pok&eacute;mon in the party know the attack, what is written to LASTRESULT?)</p>
+         </li>
+         <li data-type="buffer" class="group-start">
+            <a name="c-7D"></a>
+            <h3>7D bufferPok&eacute;mon</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> species</li>
+               </ul>
+            </div>
+            <p>Writes the name of the Pok&eacute;mon at index <code>species</code> to the specified buffer.</p>
+            <p>...Specifically, the game tries to read a string starting at <code>0x08245EE0 + (0xB * <var>species</var>)</code>, the offset in that formula being a table of Pok&eacute;mon names padded to ten bytes and separated by <code>0xFF</code>s. The game does not validate the species number; if it is larger than the number of Pok&eacute;mon in the game, the game ends up trying to read from the data after the table, resulting in garbled strings or even a crash.</p>
+         </li>
+         <li data-type="buffer" class="group-mid">
+            <a name="c-7E"></a>
+            <h3>7E bufferfirstPok&eacute;mon [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+               </ul>
+            </div>
+            <p>Writes the name of the first Pok&eacute;mon in the player's party to the specified buffer.</p>
+            <p>(Does this buffer nicknames, if present? What happens if the player has no Pok&eacute;mon?)</p>
+			<p><span class="comment">It appears to buffer ten question marks if you have no Pokémon. It doesn't buffer nicknames, even if they're present.</span></p>
+         </li>
+         <li data-type="buffer" class="group-mid">
+            <a name="c-7F"></a>
+            <h3>7F bufferpartyPok&eacute;mon [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> slot</li>
+               </ul>
+            </div>
+            <p>Writes the name of the Pok&eacute;mon in slot <code>slot</code> (zero-indexed) of the player's party to the specified buffer. If an empty or invalid slot is specified, ten spaces ("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") are written to the buffer.</p>
+            <p>(Does this buffer nicknames, if present?)</p>
+			<p><span class="comment">It appears to buffer nicknames.</span></p>
+         </li>
+         <li data-type="buffer,items" class="group-mid">
+            <a name="c-80"></a>
+            <h3>80 bufferitem</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> item</li>
+               </ul>
+            </div>
+            <p>Writes the name of the item at index <code>item</code> to the specified buffer. If the specified index is larger than the number of items in the game (<code>0x176</code>), the name of item 0 ("????????") is buffered instead.</p>
+            <p>A tip: if the item is a Poke Ball (0x0004) or any Berry except the Enigma Berry (0x0085 - 0x00AE), you can pluralize the name with <a href="#c-D4" class="c-link">bufferitems</a>.</p>
+         </li>
+         <li data-type="nop" class="group-mid">
+            <a name="c-81"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806BE35</span>
+            <h3>81 bufferdecoration</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><del><span>byte</span> a</del></li>
+                  <li><span>word-or-variable</span> b</li>
+               </ul>
+            </div>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>. (The first argument is discarded immediately. The second argument is read, but not used for anything.)</p>
+            <hr>
+            <p>In R/S/E, this command wrote the name of the decoration at index <code>b</code> to the specified (<code>a</code>) buffer.</p>
+         </li>
+         <li data-type="buffer" class="group-mid">
+            <a name="c-82"></a>
+            <h3>82 bufferattack</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> attack</li>
+               </ul>
+            </div>
+            <p>Writes the name of the attack at index <code>attack</code> to the specified buffer.</p>
+            <p>...Specifically, the game tries to read a string starting at <code>0x08247094 + (0xD * <var>attack</var>)</code>, the offset in that formula being a table of attack names padded unevenly but such that each first letter is <code>0xD</code> bytes apart. The game does not validate the attack number; if it is larger than the number of attacks in the game (<code>0x162</code>), the game ends up trying to read from the data after the table, resulting in garbled strings or even a reset.</p>
+         </li>
+         <li data-type="buffer" class="group-mid">
+            <a name="c-83"></a>
+            <h3>83 buffernumber</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> input</li>
+               </ul>
+            </div>
+            <p>Converts the value of <code>input</code> to a decimal string, and writes that string to the specified buffer.</p>
+         </li>
+         <li data-type="buffer" class="group-mid">
+            <a name="c-84"></a>
+            <h3>84 bufferstd</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> index</li>
+               </ul>
+            </div>
+            <p>Writes the standard string identified by <code>index</code> to the specified buffer. Specifying an invalid standard string (e.x. <code>0x2B</code>) can and usually will cause data corruption (I've observed destruction of the stored player name and crashes when entering/exiting certain menu screens).</p>
+            <p>These are the standard strings in Pok&eacute;mon FireRed (BPRE):</p>
+            <ol start="0" class="height-limited no-auto-numbering">
+               <li><code>0x00</code> COOL</li>
+               <li><code>0x01</code> BEAUTY</li>
+               <li><code>0x02</code> CUTE</li>
+               <li><code>0x03</code> SMART</li>
+               <li><code>0x04</code> TOUGH</li>
+               <li><code>0x05</code> COOL</li>
+               <li><code>0x06</code> BEAUTY</li>
+               <li><code>0x07</code> CUTE</li>
+               <li><code>0x08</code> SMART</li>
+               <li><code>0x09</code> TOUGH</li>
+               <li class="separator"></li>
+               <li><code>0x0A</code> ITEMS</li>
+               <li><code>0x0B</code> KEY ITEMS</li>
+               <li><code>0x0C</code> POKe BALLS</li>
+               <li><code>0x0D</code> TMs & HMs</li>
+               <li><code>0x0E</code> BERRIES</li>
+               <li class="separator"></li>
+               <li><code>0x0F</code> BOULDERBADGE</li>
+               <li><code>0x10</code> CASCADEBADGE</li>
+               <li><code>0x11</code> THUNDERBADGE</li>
+               <li><code>0x12</code> RAINBOWBADGE</li>
+               <li><code>0x13</code> SOULBADGE</li>
+               <li><code>0x14</code> MARSHBADGE</li>
+               <li><code>0x15</code> VOLCANOBADGE</li>
+               <li><code>0x16</code> EARTHBADGE</li>
+               <li class="separator"></li>
+               <li><code>0x17</code> COINS</li>
+               <li><code>0x18</code> ITEMS POCKET</li>
+               <li><code>0x19</code> KEY ITEMS POCKET</li>
+               <li><code>0x1A</code> POKe BALLS POCKET</li>
+               <li><code>0x1B</code> TM CASE</li>
+               <li><code>0x1C</code> BERRY POUCH</li>
+               <li class="separator"></li>
+               <li><code>0x1D</code> <span class="error">Trade Pok&eacute;mon with another playe</span> <i>(longer than the buffer supports)</i><br/>
+			   <span class="comment">The buffer does indeed support this string: "Trade POK&eacute;MON with another player using a GBA GAME LINK cable."</li>
+               <li><code>0x1E</code> You may battle another TRAINER</li>
+               <li><code>0x1F</code> Cancels the selected MENU item.</li>
+               <li><code>0x20</code> You may trade your Pok&eacute;mon here</li>
+               <li><code>0x21</code> <span class="error">You may battle with your friends</span> <i>(longer than the buffer supports)</i><br/>
+			   <span class="comment">The buffer does indeed support this string: "You may battle with your friends here."</li>
+               <li><code>0x22</code> Two to five TRAINERS can make</li>
+               <li><code>0x23</code> Cancels the selected MENU item.</li>
+               <li><code>0x24</code> You may trade your Pok&eacute;mon here</li>
+               <li><code>0x25</code> <span class="error">You may battle with your friends</span> <i>(longer than the buffer supports)</i><br/>
+			   <span class="comment">The buffer does indeed support this string: "You may battle with your friends here."</li>
+               <li><code>0x26</code> Cancels the selected MENU item.</li>
+            </ol>
+         </li>
+         <li data-type="buffer" class="group-end">
+            <a name="c-85"></a>
+            <h3>85 bufferstring</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>pointer</span> offset</li> <!-- CANNOT use a script bank. -->
+               </ul>
+            </div>
+            <p>Copies the string at <code>offset</code> to the specified buffer.</p>
+         </li>
+         <li data-type="items" class="group-start">
+            <a name="c-86"></a>
+            <h3>86 pokemart</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> products</li>
+               </ul>
+            </div>
+            <p>Opens the Pokemart system, offering the specified products for sale.</p>
+            <p>The <code>products</code> argument should point to a list of words. Each word is the identifier of an item to be sold. <code>0x0000</code> terminates the list.</p>
+         </li>
+         <li data-type="items" class="group-mid">
+            <a name="c-87"></a>
+            <h3>87 pokemart2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> products</li>
+               </ul>
+            </div>
+            <p>Apparent clone of <a href="#c-86" class="c-link">pokemart</a>.</p>
+         </li>
+         <li data-type="items" class="group-end">
+            <a name="c-88"></a>
+            <h3>88 pokemart3</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer</span> products</li>
+               </ul>
+            </div>
+            <p>Apparent clone of <a href="#c-86" class="c-link">pokemart</a>.</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="nop">
+            <a name="c-8A"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C411</span>
+            <h3>8A cmd8a</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <p><strong>Warning: XSE has it wrong. The function has no arguments. This means that you may need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="unknown">
+            <a name="c-8B"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C419</span>
+            <h3>8B choosecontestpkmn [details needed]</h3>
+            <p>In FireRed, this command sets the byte at <code>0x03000EA8</code> to <code>0x01</code>. I do not know what that means.</p>
+            <hr>
+            <p>In R/S/E, it prompted the player to choose a Pok&eacute;mon to enter into a Pok&eacute;mon Contest.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-8C"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C425</span>
+            <h3>8C startcontest</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <hr>
+            <p>In R/S/E, it started a Pok&eacute;mon Contest.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-8D"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C429</span>
+            <h3>8D showcontestresults</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <hr>
+            <p>In R/S/E, it showed the results of a Pok&eacute;mon Contest.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-8E"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C42D</span>
+            <h3>8E contestlinktransfer</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <hr>
+            <p>In Emerald, it apparently started a Pok&eacute;mon Contest over a wireless connection.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-8F"></a>
+            <h3>8F random</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> limit</li>
+               </ul>
+            </div>
+            <p>Stores a random integer between 0 and <code>limit</code> in variable 0x800D (LASTRESULT).</p>
+            <p>The number will always be less than <code>limit</code>.</p>
+         </li>
+         <li data-type="items">
+            <a name="c-90"></a>
+            <h3>90 givemoney [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>dword</span> value</li>
+                  <li><span>byte</span> check</li>
+               </ul>
+            </div>
+            <p>If <code>check</code> is <code>0x00</code>, this command adds <code>value</code> to the player's money.</p>
+            <p>(Can this overflow?)</p>
+         </li>
+         <li data-type="items">
+            <a name="c-91"></a>
+            <h3>91 paymoney [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>dword</span> value</li>
+                  <li><span>byte</span> check</li>
+               </ul>
+            </div>
+            <p>If <code>check</code> is <code>0x00</code>, this command subtracts <code>value</code> from the player's money.</p>
+            <p>(Can this overflow?)</p>			
+			<p><span class="comment">It cannot "over"flow (technically underflow).</span></p>
+         </li>
+         <li data-type="items">
+            <a name="c-92"></a>
+            <h3>92 checkmoney</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>dword</span> value</li>
+                  <li><span>byte</span> check</li>
+               </ul>
+            </div>
+            <p>If <code>check</code> is <code>0x00</code>, this command will check if the player has <code>value</code> or more money; script variable 0x800D (LASTRESULT) is set to <code>0x0001</code> if the player has enough money, or <code>0x0000</code> if the do not.</p>
+         </li>
+         <li data-type="dialogs" class="group-start">
+            <a name="c-93"></a>
+            <h3>93 showmoney [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Spawns a secondary box showing how much money the player has.</p>
+            <p>The box does not update automatically. If you change how much money the player has after using <code>showmoney</code>, you must use <a href="#c-95" class="c-link">updatemoney</a> to display the new amount. The box can be hidden using <a href="#c-94" class="c-link">hidemoney</a>.</p>
+            <p>(Need to test this to find its quirks...)</p>
+         </li>
+         <li data-type="dialogs" class="group-mid">
+            <a name="c-94"></a>
+            <h3>94 hidemoney</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Hides the secondary box spawned by <a href="#c-93" class="c-link">showmoney</a>.</p>
+            <p>(Does this discard its arguments like hidecoins does?)</p>
+         </li>
+         <li data-type="dialogs" class="group-end">
+            <a name="c-95"></a>
+            <h3>95 updatemoney [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Updates the secondary box spawned by <a href="#c-93" class="c-link">showmoney</a>. (What does it do with its arguments?)</p>
+            <p>You'd want to use this if you change how much money the player has after using <code>showmoney</code>.</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-96"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C415</span>
+            <h3>96 cmd96</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <p><strong>Warning: XSE has it wrong. The function has no arguments. This means that you may need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="">
+            <a name="c-97"></a>
+            <h3>97 fadescreen [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> effect</li>
+               </ul>
+            </div>
+            <p>Fades the screen to black or back, using the specified <code>effect</code>. Effect <code>0x00</code> fades in, and effect <code>0x01</code> fades out. I don't know if other effects exist.</p>
+            <p>If effect <code>0x00</code> is used when the screen isn't actually faded to black, then the screen will be immediately blackened and then faded back in, producing a "blinking" effect.</p>
+            <p>(Does this block?)</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li>
+            <a name="c-9C"></a>
+            <h3>9C doanimation [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> animation</li>
+               </ul>
+            </div>
+            <p>Executes the specified field move animation.</p>
+            <p>The animations are defined in a table stored in the ROM, and they use their own scripting engine. More information can be found in a <a href="http://www.pokecommunity.com/showthread.php?t=205158&page=5">post</a> on PokeCommunity.</p>
+            <p>These are the animations that have been found in Pok&eacute;mon FireRed (BPRE):</p>
+            <ol class="height-limited no-auto-numbering">
+               <li><code>0x01</code> CUT (grass)? (black Pok&eacute;mon bar + leaf spiral) <span class="comment">I can confirm.</span></li>
+               <li><code>0x02</code> CUT</li>
+               <li><code>0x03</code> Part of the FLY animation sequence.</li>
+               <li><code>0x06</code> Part of the FLY animation sequence.</li>
+               <li><code>0x08</code> <span class="error">Buggy SURF-Pok&eacute;mon sprite appears on map</span></li>
+               <li><code>0x09</code> SURF</li>
+               <li><code>0x19</code> PokeCenter healing machine</li>
+               <li><code>0x1E</code> Part of the FLY animation sequence. (takeoff)</li>
+               <li><code>0x1F</code> Part of the FLY animation sequence. Calls animation 0x3B.</li>
+               <li><code>0x20</code> Part of the FLY animation sequence.</li>
+               <li><code>0x22</code> Landing (after FLY)</li>
+               <li><code>0x23</code> FLY (crashes, probably because destination isn't set)</li>
+               <li><code>0x25</code> ROCK SMASH</li>
+               <li><code>0x26</code> TELEPORT? (black Pok&eacute;mon bar)</li>
+               <li><code>0x28</code> STRENGTH</li>
+               <li><code>0x2B</code> WATERFALL</li>
+               <li><code>0x2C</code> DIVE (crashes, probably because destination/directionality isn't set)</li>
+               <li><code>0x2D</code> <span class="error">Shows a buggy message box in the top-left corner</span></li>
+               <li><code>0x33</code> SWEET SCENT? <span class="comment">I can confirm.</span></li>
+               <li><code>0x3B</code> Part of the FLY animation sequence.</li>
+               <li><code>0x3E</code> Hall of Fame registration machine</li>
+               <li><code>0x3F</code> Teleports to player's home? <span class="comment">Teleports to the flying spot for the sethealingplace map.</span></li>
+               <li><code>0x41</code> VS SEEKER (crashes)</li>
+               <li><code>0x45</code> White flash</li>
+            </ol>
+            <p>(Does it accept a variable? Test and confirm 01, 1E, 26, 3F, 41.)</p>
+         </li>
+         <li>
+            <a name="c-9D"></a>
+            <h3>9D setanimation [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> animation</li>
+                  <li><span>word-or-variable</span> slot</li>
+               </ul>
+            </div>
+            <p>Tells the game which party Pok&eacute;mon to use for the next field move animation.</p>
+            <p>(What does the byte do?)</p>
+         </li>
+         <li>
+            <a name="c-9E"></a>
+            <h3>9E checkanimation [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> animation</li>
+               </ul>
+            </div>
+            <p>Blocks script execution until all playing field move animations complete.</p>
+            <p>(What does the word do?)</p>
+         </li>
+         <li>
+            <a name="c-9F"></a>
+            <h3>9F sethealingplace [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> flightspot</li>
+               </ul>
+            </div>
+            <p>Sets which healing place the player will return to if all of the Pok&eacute;mon in their party faint. A list of available healing places can be found <a href="http://www.pokecommunity.com/showthread.php?t=189304">on PokeCommunity</a>.</p>
+            <p>(Does it accept a variable? And what happens if we supply a value of <code>0x00</code>?)</p>
+         </li>
+         <li>
+            <a name="c-A0"></a>
+            <h3>A0 checkgender</h3>
+            <p>Checks the player's gender. If male, then 0x0000 is stored in variable 0x800D (LASTRESULT). If female, then 0x0001 is stored in LASTRESULT.</p>
+         </li>
+         <li data-type="sound">
+            <a name="c-A1"></a>
+            <h3>A1 cry [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> species</li>
+                  <li><span>word</span> effect</li>
+               </ul>
+            </div>
+            <p>Plays the specified (<code>species</code>) Pok&eacute;mon's cry. You can use <a href="#c-C5" class="c-link">waitcry</a> to block script execution until the sound finishes.</p>
+            <p>(What is the effect? Can it be a variable?)</p>
+         </li>
+         <li data-type="map">
+            <a name="c-A2"></a>
+            <h3>A2 setmaptile [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+                  <li><span>word</span> tile_number</li>
+                  <li><span>word</span> tile_attrib</li>
+               </ul>
+            </div>
+            <p>Changes the tile at (<code>X</code>, <code>Y</code>) on the current map.</p>
+            <p>(Can some or all arguments be variables? What is <code>tile_attrib</code>? It's usually 0x0 or 0x1, but I don't think it's a movement permission.)</p>
+         </li>
+         <li data-type="map" class="group-start">
+            <a name="c-A3"></a>
+            <h3>A3 resetweather [details needed]</h3>
+            <p>Queues a weather change to the default weather for the map.</p>
+            <p>(Only one weather change can be queued at once?)</p>
+         </li>
+         <li data-type="map" class="group-mid">
+            <a name="c-A4"></a>
+            <h3>A4 setweather [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> type</li>
+               </ul>
+            </div>
+            <p>Queues a weather change to <code>type</code> weather.</p>
+            <p>(Only one weather change can be queued at once?)</p>
+            <p>(Does this accept variables?)</p>
+         </li>
+         <li data-type="map" class="group-end">
+            <a name="c-A5"></a>
+            <h3>A5 doweather [details needed]</h3>
+            <p>Executes the weather change queued with <a href="#c-A3" class="c-link">resetweather</a> or <a href="#c-A4" class="c-link">setweather</a>. The current weather will smoothly fade into the queued weather.</p>
+            <p>(Does this block?)</p>
+         </li>
+         <li data-type="map">
+            <a name="c-A6"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806AA31</span>
+            <h3>A6 cmda6</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> subroutine</li>
+               </ul>
+            </div>
+            <p>This command manages cases in which maps have tiles that change state when stepped on (specifically, cracked/breakable floors).</p>
+            <p>Think of <code>cmda6</code> as a script-friendly way to access Game Freak's official walking script implementation (but with ASM instead of scripts). This command allows you to select which one of eight predefined ASM subroutines should be enabled.</p>
+
+            <table class="argument-table" border="1">
+               <caption>Subroutine effects in FireRed</caption>
+               <thead>
+                  <tr>
+                     <th>Number</th>
+                     <th>Used In</th>
+                     <th>Function</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <th class="center">0</td>
+                     <td class="inverse" colSpan="2">Unused/Nop. Returns immediately without doing anything.</td>
+                  </tr>
+                  <tr>
+                     <th class="center">1</td>
+                     <td class="center">Route 113</td>
+                     <td><strong>R/S/E leftover. Crippled in FireRed -- it does nothing.</strong><br><br>When the player steps on Tile 20A (ash-covered tall grass), it changes into Tile 212 (normal grass).</td>
+                  </tr>
+                  <tr>
+                     <th class="center">2</td>
+                     <td class="inverse" colSpan="2" rowSpan="2">Unused/Nop. Returns immediately without doing anything.</td>
+                  </tr>
+                  <tr>
+                     <th class="center">3</td>
+                  </tr>
+                  <tr>
+                     <th class="center">4</td>
+                     <td class="center">Icefall Cave</td>
+                     <td>
+                        <p>When the player steps on a tile with behavior byte 0x26 (uncracked ice), it changes into Tile 35A (cracked ice). When they step on a tile with behavior byte 0x27 (cracked ice), it changes into Tile 35B (hole) after a four-frame delay and script variable 0x4001 is set to 0x0001.</p>
+                        <p>This subroutine also compares the player's coordinates to a set of nine X/Y coordinate pairs stored at <code>0x083A7330</code>, and sets one of the temporary script flags (0x001 - 0x009) if there's a match. Each coordinate pair corresponds exactly to a breakable ice tile in Icefall Cave; in combination with a level script, I think this saves tile states when the game is saved.</p>
+                     </td>
+                  </tr>
+                  <tr>
+                     <th class="center">5</td>
+                     <td class="inverse" colSpan="2" rowSpan="2">Unused/Nop. Returns immediately without doing anything.</td>
+                  </tr>
+                  <tr>
+                     <th class="center">6</td>
+                  </tr>
+                  <tr>
+                     <th class="center">7</td>
+                     <td class="center">Granite&nbsp;Cave<br>Sky&nbsp;Pillar</td>
+                     <td><strong>R/S/E leftover. Crippled in FireRed -- it does nothing.</strong><br><br>When the player steps on Tile 22F (cracked floor), it changes into Tile 206 (hole). At some point, script variable 0x4030 is set to 0x0000.</td>
+                  </tr>
+                  <tr>
+                     <th class="center">Others</td>
+                     <td class="inverse" colSpan="2" rowSpan="2">Treated as Subroutine 0</td>
+                  </tr>
+               </tbody>
+            </table>
+
+            <div class="collapsible-section">
+               <h4>Additional details: How does this command work?</h4>
+               <div class="body">
+                  <p>At <code>0x03005090</code>, there is an <dfn>execution queue</dfn> -- a list of ASM functions to be executed on every frame. (Each list item also has a small amount of space to use to maintain its state.) <code>Cmda6</code> checks the queue to see if a specific ASM routine, the <dfn>walking routine manager</dfn> at <code>0x0806E811</code>, is there. If so, <code>cmda6</code> clears the state data for that queue item, and then inserts the argument you specify into the state data.</p>
+                  <p>When the walking routine manager runs (once every frame), it reads the injected state data and uses that to determine which <dfn>walking subroutine</dfn> it should call. (Eight are allowed, three of which are defined and one of which actually works.) It then calls the selected walking subroutine, which will generally perform some action if the player has taken a step (usually, changing the tile under their feet).</p>
+                  <p>Bundled in this resource's ZIP should be a file, <a href="CmdA6, disassembled and rewritten.txt" class="c-link">CmdA6, disassembled and rewritten.txt</a>. (If I've forgotten to include it, remind me.) That file contains the assembly code for CmdA6, the tile manager routine, and the three subroutines (rewritten in a pseudosyntax which you may or may not find more readable). Studying that should provide you with most of the information you would need to, say, add a subroutine of your own to create a <code>cmda6</code>-managed walking function that is accurate to the frame.</p>
+               </div>
+            </div>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="map" class="group-start">
+            <a name="c-AC"></a>
+            <h3>AC setdooropened [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+               </ul>
+            </div>
+            <p>Queues the opening of the door tile at (<code>X</code>, <code>Y</code>) with an animation.</p>
+            <p>(Does this accept variables? What happens if it's used on a tile that isn't a door?)</p>
+         </li>
+         <li data-type="map" class="group-mid">
+            <a name="c-AD"></a>
+            <h3>AD setdoorclosed [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+               </ul>
+            </div>
+            <p>Queues the closing of the door tile at (<code>X</code>, <code>Y</code>) with an animation.</p>
+            <p>(Does this accept variables? What happens if it's used on a tile that isn't a door?)</p>
+         </li>
+         <li data-type="map" class="group-mid">
+            <a name="c-AE"></a>
+            <h3>AE doorchange [details needed]</h3>
+            <p>Executes the state changes queued with <a href="#c-AC" class="c-link">setdooropened</a>, <a href="#c-AD" class="c-link">setdoorclosed</a>, <a href="#c-AF" class="c-link">setdooropened2</a>, and <a href="#c-B0" class="c-link">setdoorclosed2</a>.</p>
+            <p>(Does this block for animated door changes? For both?)</p>
+         </li>
+         <li data-type="map" class="group-mid">
+            <a name="c-AF"></a>
+            <h3>AF setdooropened2 [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+               </ul>
+            </div>
+            <p>Queues the opening of the door tile at (<code>X</code>, <code>Y</code>) without an animation.</p>
+            <p>(Does this accept variables? What happens if it's used on a tile that isn't a door?)</p>
+         </li>
+         <li data-type="map" class="group-end">
+            <a name="c-B0"></a>
+            <h3>B0 setdoorclosed2 [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> X</li>
+                  <li><span>word</span> Y</li>
+               </ul>
+            </div>
+            <p>Queues the closing of the door tile at (<code>X</code>, <code>Y</code>) without an animation.</p>
+            <p>(Does this accept variables? What happens if it's used on a tile that isn't a door?)</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-B1"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C725</span>
+            <h3>B1 cmdb1</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <p><strong>Warning: XSE has it wrong. The function has no arguments. This means that you may need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="nop">
+            <a name="c-B2"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C729</span>
+            <h3>B2 cmdb2</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="battles" class="group-start">
+            <a name="c-B6"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806C369</span>
+            <h3>B6 setwildbattle [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> species</li> <!-- not a variable -->
+                  <li><span>byte</span> level</li>
+                  <li><span>word</span> item</li>
+               </ul>
+            </div>
+            <p>Prepares to start a wild battle against a <code>species</code> at Level <code>level</code> holding <code>item</code>. Running this command will not affect normal wild battles. You start the prepared battle with <a href="#c-B7" class="c-link">dowildbattle</a>.</p>
+            <p>To be specific, this command will automatically generate a <a href="http://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_data_structure_in_Generation_III">100-byte Pok&eacute;mon</a> matching the provided arguments, and store it at <code>0x0202402C</code> (the RAM location of the first enemy in a battle). The RAM for enemies 2-6 is also cleared. This allows a script to generate a wild Pok&eacute;mon before initiating a battle.</p>
+            <p>The uses for generating a Pok&eacute;mon in this manner are many and varied. Hypothetically speaking, one could call this command, use <a href="#c-11" class="c-link">writebytetooffset</a> to pre-damage the generated Pok&eacute;mon, and <em>then</em> run <code>dowildbattle</code>.</p>
+            <p>(Can the item be a variable?) <span class="comment">Tests would suggest that, no, items cannot be set through variables.</span></p>
+         </li>
+         <li data-type="battles,blocking" class="group-end">
+            <a name="c-B7"></a>
+            <h3>B7 dowildbattle</h3>
+            <p>Starts a wild battle against the Pok&eacute;mon generated by <a href="#c-B6" class="c-link">setwildbattle</a>. Blocks script execution until the battle finishes.</p>
+            <p>If the Pok&eacute;mon created by <code>setwildbattle</code> was invalid, then this command will hang and a battle will not start.</p>
+            <p>(Nonexistent species such as <code>0x4000</code> are known to cause invalid Pok&eacute;mon... But would other Pok&eacute;mon (i.e. broken checksums, or stats in the last 20 bytes being modified) cause problems as well?)</p>
+         </li>
+
+<!-- TODO! -->
+
+         <li data-type="dialogs" class="group-start">
+            <a name="c-C0"></a>
+            <h3>C0 showcoins</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Spawns a secondary box showing how many Coins the player has.</p>
+            <p>The box does not update automatically. If you change how many Coins the player has after using <code>showcoins</code>, you must use <a href="#c-C2" class="c-link">updatecoins</a> to display the new amount. The box can be hidden using <a href="#c-C1" class="c-link">hidecoins</a>.</p>
+         </li>
+         <li data-type="dialogs" class="group-mid">
+            <a name="c-C1"></a>
+            <h3>C1 hidecoins</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><del><span>byte</span> X</del></li>
+                  <li><del><span>byte</span> Y</del></li>
+               </ul>
+            </div>
+            <p>Hides the secondary box spawned by <a href="#c-C0" class="c-link">showcoins</a>. It doesn't appear to use its arguments, but they are still required.</p>
+         </li>
+         <li data-type="dialogs" class="group-end">
+            <a name="c-C2"></a>
+            <h3>C2 updatecoins [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> X</li>
+                  <li><span>byte</span> Y</li>
+               </ul>
+            </div>
+            <p>Updates the secondary box spawned by <a href="#c-C0" class="c-link">showcoins</a>. (What does it do with its arguments?)</p>
+            <p>You'd want to use this if you change how many Coins the player has after using <code>showcoins</code>.</p>
+         </li>
+         <li data-type="logic">
+            <a name="c-C3"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A871</span>
+            <h3>C3 cmdc3</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>hidden-variable</span> a</li>
+               </ul>
+            </div>
+            <p>Increases the value of the specified hidden variable by 1. The hidden variable's value will not be allowed to exceed <code>0x00FFFFFF</code>.</p>
+            <p>The PokeCenter nurses use this to increment hidden variable 15 (0xF) just after you pick "YES" to heal your party. I don't know why.</p>
+			<p><span class="comment">It appears these hidden variables correspond to the encrypted counters documented in <a href="http://www.pokecommunity.com/showthread.php?p=8879859#post8879859">this Pok&eacute;Community post</a>. 0xF in that list is indeed # of PokéCenter heals, which corresponds to what DavidJCobb documented the PC script increments.</span></p>
+		</li>
+         <li data-type="warping">
+            <a name="c-C4"></a>
+            <h3>C4 warp6</h3>
+            <p>Clone of <a href="#c-39" class="c-link">warp</a>... Except that it doesn't appear to have any effect when used in some of FireRed's default level scripts. (If it did, Berry Forest would be impossible to enter...)</p>
+         </li>
+         <li data-type="blocking,sound,timing">
+            <a name="c-C5"></a>
+            <h3>C5 waitcry</h3>
+            <p>Blocks script execution until <a href="#c-A1" class="c-link">cry</a> finishes.</p>
+         </li>
+         <li data-type="buffer">
+            <a name="c-C6"></a>
+            <h3>C6 bufferboxname</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> box</li>
+               </ul>
+            </div>
+            <p>Writes the name of the specified (<code>box</code>) PC box to the specified buffer.</p>
+         </li>
+         <li>
+            <a name="c-C7"></a>
+            <h3>C7 textcolor [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>byte</span> color</li>
+               </ul>
+            </div>
+            <p>Sets the <code>color</code> of the text in standard message boxes. <code>0x00</code> produces blue (male) text, <code>0x01</code> produces red (female) text, <code>0xFF</code> resets the color to the default for the current OW's gender, and all other values produce black text.</p>
+            <p>This command does not affect braille text. Colors specified with this command will be overriden by colors specified by control codes in the string.</p>
+            <p>(The command writes a byte to <code>0x020370DA</code>, and that byte is reset to <code>0xFF</code> every frame.)</p>
+
+            <ul class="gallery fewer-than-three">
+               <li class="header">Gallery</li><!--
+            --><li>
+                  <img src="Textcolor 1.PNG">
+                  Usually, an OW's gender controls the text color.
+               </li><!--
+            --><li>
+                  <img src="Textcolor 2.png">
+                  Textcolor is one of many ways to override that.
+               </li>
+            </ul>
+         </li>
+         <li data-type="dialogs">
+            <a name="c-C8"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806B829</span>
+            <h3>C8 cmdc8 [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer-or-bank-0</span> string</li>
+               </ul>
+            </div>
+            <p>The <em>exact</em> purpose of this command is unknown, but it is related to the blue help-text box that appears on the bottom of the screen when the Main Menu is opened.</p>
+            <p>This command will load the appropriate palette and tiles for a help-text box containing the specified string. It also writes data for a new dialog box into RAM. However, the dialog box is not displayed.</p>
+            <p>Note that when this command loads the palette and tiles, it overwrites the frame tiles in use by any standard message boxes that may already be on-screen. Their frames change into (improperly-displayed) help-text frames, though the text remains completely unchanged.</p>
+            <p><strong>Warning: XSE has it wrong. The function has one four-byte argument. This means that you will need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li data-type="dialogs">
+            <a name="c-C9"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806B851</span>
+            <h3>C9 cmdc9 [details needed]</h3>
+            <p>The <em>exact</em> purpose of this command is unknown, but it is related to the blue help-text box that appears on the bottom of the screen when the Main Menu is opened.</p>
+            <p>This command appears to unload most of the text and frame tiles that <a href="#c-C8" class="c-link">cmdc8</a> loads into memory, though it will not restore overwritten frame tiles used by other dialog boxes.</p>
+         </li>
+         <li data-type="dialogs" class="group-start">
+            <a name="c-CA"></a>
+            <h3>CA signmsg</h3>
+            <p>After using this command, all standard message boxes will use the signpost frame.</p>
+         </li>
+         <li data-type="dialogs" class="group-end">
+            <a name="c-CB"></a>
+            <h3>CB normalmsg</h3>
+            <p>Ends the effects of <a href="#c-CA" class="c-link">signmsg</a>, returning message box frames to normal.</p>
+         </li>
+         <li data-type="comparisons,logic">
+            <a name="c-CC"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A889</span>
+            <h3>CC comparehiddenvar [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>hidden-variable</span> a</li>
+                  <li><span>dword</span> value</li>
+               </ul>
+            </div>
+            <p>Compares the value of a hidden variable to a dword.</p>
+            <p><strong>Warning: XSE has it wrong. The second argument is a dword, not a word. This means that you will need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+         <li class="group-start">
+            <a name="c-CD"></a>
+            <h3>CD setobedience [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word</span> slot</li>
+               </ul>
+            </div>
+            <p>Makes the Pok&eacute;mon in the specified <code>slot</code> of the player's party obedient. It will not randomly disobey orders in battle.</p>
+            <p>(Can the slot be a variable?)</p>
+         </li>
+         <li class="group-end">
+            <a name="c-CE"></a>
+            <h3>CE checkobedience</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> slot</li>
+               </ul>
+            </div>
+            <p>Checks if the Pok&eacute;mon in the specified <code>slot</code> of the player's party is obedient. If the Pok&eacute;mon is disobedient, <code>0x0001</code> is written to script variable 0x800D (LASTRESULT). If the Pok&eacute;mon is obedient (or if the specified slot is empty or invalid), <code>0x0000</code> is written.</p>
+         </li>
+         <li data-type="unknown">
+            <a name="c-CF"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A28D</span>
+            <h3>CF executeram [details needed]</h3>
+            <p>Depending on factors I haven't managed to understand yet, this command may cause script execution to jump to the offset specified by the pointer at <code>0x020370A4</code>.</p>
+            <p>This command uses what appear to be checksums at <code>[0x03005008] + 0x32E0</code> and <code>[0x03005008] + 0x361C</code> to validate data pointed to by pointers at <code>[0x03005008] + 0x32E4</code> (target is 332 bytes) and <code>[0x03005008] + 0x3620</code> (target is either 1000 or 1004 bytes), respectively. If this validation fails, the command does nothing. Unfortunately, I've looked at the ASM every way I can; unless someone figures out what's at those DMA-protected RAM offsets, this command's function will remain a mystery.</p>
+         </li>
+         <li>
+            <a name="c-D0"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806A8C1</span>
+            <h3>D0 setworldmapflag</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>flag-or-variable</span> worldmapflag</li>
+               </ul>
+            </div>
+            <p>Sets <code>worldmapflag</code> to 1. This allows the player to Fly to the corresponding map, if that map has a flightspot.</p>
+            <p>Specifically, the command will set the specified flag if all of the following requirements are met, and will apparently do nothing if one or more of the requirements are not met:</p>
+            <ol>
+               <li>The byte at <code>0x0203ADFA</code> is greater than <code>0x03</code>.</li>
+               <li>The specified flag is on a list (at <code>0x08456C50</code>, with <code>0x10</code> two-byte entries) of world map flags that can actually be flown to.</li>
+            </ol>
+         </li>
+         <li data-type="warping">
+            <a name="c-D1"></a>
+            <h3>D1 warpteleport2</h3>
+            <p>Clone of <a href="#c-D1" class="c-link">warpteleport</a>? It is apparently only used in FR/LG, and only with specials.<a href="#warpteleport-use-cases" class="source-link">[source]</a></p>
+         </li>
+         <li>
+            <a name="c-D2"></a>
+            <h3>D2 setcatchlocation</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>word-or-variable</span> slot</li>
+                  <li><span>byte</span> location</li>
+               </ul>
+            </div>
+            <p>Changes the location where the player caught the Pok&eacute;mon in the specified <code>slot</code> of their party. A list of valid catch locations can be found <a href="http://www.pokecommunity.com/showthread.php?t=216071">on PokeCommunity</a>.</p>
+         </li>
+         <li data-type="dialogs">
+            <a name="c-D3"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806BC41</span>
+            <h3>D3 braille2</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>pointer-or-bank-0</span> text</li>
+               </ul>
+            </div>
+            <p>Sets variable 0x8004 to a value based on the width of the braille string at <code>text</code>.</p>
+            <p>Because <a href="#c-78" class="c-link">braille</a> strings do not support the <code>\p</code> or <code>\l</code> control codes, Game Freak had to create a "fake" message cursor every time they wanted to show multi-part or multi-line braille strings. To facilitate this, they created <a href="#c-25" class="c-link">special</a> 0x1B2, which draws a cursor on the screen at a position specified by variables 0x8004 (X) and 0x8005 (Y).</p>
+            <p>This command, <code>braille2</code>, will calculate the length of a specified braille string, and then set 0x8004 to a value based on that length. If you then show that string in a message box and call <code>special</code> 0x1B2, a cursor will appear exactly at the end of the braille string.</p>
+         </li>
+         <li data-type="buffer">
+            <a name="c-D4"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x0806BD91</span>
+            <h3>D4 bufferitems [details needed]</h3>
+            <div class="args">
+               <span>Arguments:</span>
+               <ul>
+                  <li><span>buffer</span> out</li>
+                  <li><span>word-or-variable</span> item</li>
+                  <li><span>word-or-variable</span> quantity</li>
+               </ul>
+            </div>
+            <p>Writes the name of the specified (<code>item</code>) item to the specified buffer. If the specified item is a Berry (0x85 - 0xAE) or Poke Ball (0x4) and if the quantity is 2 or more, the buffered string will be pluralized ("IES" or "S" appended). If the specified item is the Enigma Berry, I have no idea what this command does (but testing showed no pluralization). If the specified index is larger than the number of items in the game (<code>0x176</code>), the name of item 0 ("????????") is buffered instead.</p>
+            <p>(The Enigma Berry is treated as a special case and handled with ASM that, among many other things, appears to conditionally read from a table at <code>0x083DF7CC</code>. What the hell is this command doing for Enigma Berries?)</p>
+         </li>
+         <li data-type="nop">
+            <a name="c-D5"></a>
+            <span class="asm-offset investigated">ASM (FR): 0x08069ED1</span>
+            <h3>D5 cmdd5</h3>
+            <p>In FireRed, this command is a <a href="#c-00" class="c-link">nop</a>.</p>
+            <p><strong>Warning: XSE has it wrong. The function has no arguments. This means that you may need to use <code>#raw</code> to compile a script that uses this command, and that such scripts will not decompile properly.</strong></p>
+         </li>
+      </ol>
+      <hr>
+      <h2><a name="appendix">Appendix</a></h2>
+      <h3><a name="appendix-comparisons">Comparison operators</a></h3>
+      <p>The condition byte supplied to the <a href="#c-06 class="c-link">if1</a> and <a href="#c-07 class="c-link">if2</a> commands determines what is done with the result of the previous comparison.</p>
+      <ul>
+         <li><code>0x00</code> = A is less than B</li>
+         <li><code>0x01</code> = A is equal to B</li>
+         <li><code>0x02</code> = A is greater than B</li>
+         <li><code>0x03</code> = A is less than or equal to B</li>
+         <li><code>0x04</code> = A is greater than or equal to B</li>
+         <li><code>0x05</code> = A is not equal to B</li>
+      </ul>
+      <h3><a name="appendix-dialogs">Dialog boxes</a></h3>
+      <p>The dialog box types that I have identified in FireRed are as follows:</p>
+      <dl>
+         <dt>Standard message box</dt>
+            <dd>This message box can be accessed and displayed directly with script code. Its frame can be changed to resemble a signpost using certain scripting commands. Only one may display at a time.</dd>
+         <dt>Secondary box</dt>
+            <dd>This box is the product of <a href="#c-C0" class="c-link">showcoins</a>, <a href="#c-93" class="c-link">showmoney</a>, and similar commands. It displays two strings: a left-aligned header, and a right-aligned body string with a smaller font size. Its size and contents cannot be manipulated without writing ASM code.</dd>
+         <dt>Multichoice box</dt>
+            <dd>This box has a thick black frame, and is used to display lists of options. A cursor appears within the box and can be controlled with the D-Pad; A can be used to select an option, and in some cases B can be used to cancel without selecting an option.</dd>
+      </dl>
+      <h3><a name="appendix-command-asm">Finding the offset of a command's ASM (FireRed)</a></h3>
+      <p>To find the offset of a given script command's ASM, the game looks it up from a table. In BPRE, this table is located at <code>0x0815F9B4</code>, and to find the pointer for a given command, you left-shift that command by 2 and then add the result to the table's offset. There, you'll find a pointer to the command's ASM.</p>
+      <p>For example, the command byte for <a href="#c-C0" class="c-link">showcoins</a> is <code>0xC0</code>. Left-shifting that by two gives us <code>0x300</code>; adding that to the table offset gives us <code>0x0815FCB4</code>, and the pointer at that offset is <code>0x0806C259</code> -- a pointer to <code>showcoins</code>' ASM with the THUMB bit set.</p>
+      <h3><a name="appendix-hidden-vars">Hidden variables</a></h3>
+      <p>FireRed maintains 64 "hidden variables" in one of its DMA-protected RAM sections (specifically, they overlap the RAM used for script variables 0x4100 - 0x417F, at <code>[0x03005008] + 0x1200</code>). Each of these variables is a dword whose value has been encrypted with a dword key stored at <code>[0x0300500C] + 0xF20</code>. Of these sixty-four variables, scripts have access to all but the last six (vars 0x00 to 0x33).</p>
+      <p>The purpose of these hidden variables is not yet clear. Hidden variable 5 appears to be a pedometer, and PokeCenters use hidden variable 15 (0xF) for something.</p>
+      <h3><a name="appendix-person">Person event terminology</a></h3>
+      <p>For the sake of consistency and to save on explanations in the command descriptions, I shall use the following terminology when discussing commands that deal with Person events on maps:</p>
+      <dl>
+         <dt>local ID</dt>
+            <dd>
+               <p>This is what AdvanceMap calls the "Person event no". It is a single-byte identifier that serves to differentiate one Person event from another within the current map. Most of the commands that deal with Person events require you to specify a Person using its local ID.</p>
+               <p>Local IDs must be unique within the map. That is, two Person events on the same map cannot have the same local IDs, but two Person events on different maps can. The player uses local ID <code>0x00</code> internally but is identified by local ID <code>0xFF</code> in scripts; the camera is identified by local ID <code>0x7F</code> in scripts. Person IDs are zero-indexed, but (as I just said) 0 is reserved for the player's OW.</p>
+            </dd>
+         <dt>visibility flag</dt>
+            <dd>
+               <p>This is what AdvanceMap calls the "Person ID". It is a scriptable flag that, if set, hides the Person event from the map. Commands like <a href="#c-53" class="c-link">hidesprite</a> modify the states of these flags.</p>
+               <p>Visibility flags do not have to be unique; multiple Person events can share the same visibility flag, even if on the same map. (They will all be affected by the flag's state.) However, the flag <code>0x0000</code> cannot be used; a Person event that has been set to use it ("Person ID" is "$0000" in AdvanceMap) effetively has no visibility flag.</p>
+            </dd>
+      </dl>
+      <h3><a name="appendix-banks">Script banks</a></h3>
+      <p>A script bank is a four-byte storage area. Four such banks are available. They are usually used to load pointers that certain commands (or ASM code) can make use of.</p>
+      <h3><a name="appendix-std">Standard functions</a></h3>
+      <p>The Advance games contain "standard functions". These are reusable scripts that have been given a single-byte identifier. They can be invoked using <a href="#c-08" class="c-link">gotostd</a>, <a href="#c-09" class="c-link">callstd</a>, <a href="#c-0A" class="c-link">gotostdif</a>, and <a href="#c-0B" class="c-link">callstdif</a>.</p>
+      <p>Most standard functions display different types of message boxes, or handle the process of obtaining a visible item from the overworld. <a href="http://www.pokecommunity.com/showthread.php?t=201077">A thread on PokeCommunity</a> describes the standard functions in detail, lists each of Emerald's standard functions, and describes how to add your own standard function to any of the Pok&eacute;mon Advance-generation games.</p>
+      <h3><a name="appendix-rematchtable">Trainer battles: the rematch flag table</a></h3>
+      <p>FireRed has a data table at <code>0x0845318C</code>, which associates a "base" trainer flag with up to five other trainer flags. These other flags are used for rematches; their trainers are rematch versions of the trainer associated with the "base" flag.</p>
+      <p>The table is limited to <code>0xDC</code> (zero-indexed) rows. A single row in the table is structured in the following manner:</p>
+      <ul>
+         <li>Word: Trainer flag (battle 0) (base flag)</li>
+         <li>Word: Trainer flag (rematch 1)</li>
+         <li>Word: Trainer flag (rematch 2)</li>
+         <li>Word: Trainer flag (rematch 3)</li>
+         <li>Word: Trainer flag (rematch 4)</li>
+         <li>Word: Trainer flag (rematch 5)</li>
+         <li>Word: Unknown.</li>
+         <li>Word: Unknown.</li>
+      </ul>
+      <p><code>0xFFFF</code> in a row means that there is no rematch for that slot. <code>0x0000</code> in a row means that no rematches are defined for that slot or any of the ones after it (and the slots after it should be <code>0x0000</code> as well).</p>
+
+      <div class="collapsible-section">
+         <h4>Additional details: How is the table read?</h4>
+         <div class="body">
+            <p>When initiating a rematch battle via <a href="#c-5C" class="c-link">trainerbattle</a>, the game will attempt to <dfn>select</dfn> the appropriate rematch flag, which will be used to start the battle.</p>
+            <p>First, the command locates the rematch table row for the input trainer flag (by searching for a row whose first flag is equal to the input trainer flag). The ASM will then loop through each rematch flag in the row, checking their states and retrieving the earliest cleared (non-defeated) rematch flag. If the ASM encounters an <code>0xFFFF</code> entry, that entry will be skipped. If the ASM encounters <code>0x0000</code> at any point in the row, it will stop looping and select the last valid flag it looped over.</p>
+            <p>The game saves the number of the selected rematch flag (0 - 5), and uses that to check one of five different flags that enable rematches based on the player's progress through the game; we'll cause these five flags "state flags". If the state flag that would enable this rematch flag is cleared, then the game will select the previous rematch flag. (If the previous rematch flag is <code>0xFFFF</code>, then the game loops backwards through the row until it finds a valid flag; that flag is then selected.)</p>
+            <p>Finally, the game will take the selected flag and check its state. If it is cleared, <code>trainerbattle</code> will call a script (different one for each battle type), and that script will start the battle by calling <a href="#c-5D" class="c-link">repeattrainerbattle</a> (or an equivalent <a href="#c-25" class="c-link">special</a>). If the selected flag is set, on the other hand, then <code>trainerbattle</code> will return without doing anything and the calling script will continue.</p>
+         </div>
+      </div>
+      <div class="collapsible-section">
+         <h4>Additional details: What would I need to modify to extend the table?</h4>
+         <div class="body">
+            <p>The limit to <code>0xDC</code> rows is the result of a comparison at <code>0x0810D1BC</code>. As far as I know you can change that to any single-byte value without problems, though you'll probably have to repoint the table so you can extend it. (Multi-byte values would require rearranging some RAM and some ASM.)</p>
+            <p>The <code>trainerbattle</code> command's pointer to the table is at <code>0x0810CEA4</code>. There may be other pointers to the table elsewhere in the ROM, but so far as I can discern, that's the only pointer used by <code>trainerbattle</code>.</p>
+            <p>The limit to five rematch flags per row is the result of:</p>
+            <ul>
+               <li>Opcodes at <code>0x0810D1AC</code> and <code>0x0810CCA8</code> compare registers to the maximum number of rematch flags.</li>
+               <li>When reading the table, the opcode at <code>0x0810D1B8</code> increments a register by the length of one table row (<code>0x10</code> bytes).</li>
+               <li>A logical shift at <code>0x0810CE88</code> is used to recalculate the offset of a table row given a row number. (The result of the shift is the number of bytes that, when added to the table offset, produces the row offset.)</li>
+               <li>A set of pointers starting at <code>0x0810CCBC</code> point to ASM routines (which load the appropriate "state flag" for a given rematch number and then goto the ASM routine at <code>0x0806E6D0</code>); there's one routine per rematch slot, and to add more, you'll need to repoint that set of pointers (the pointer to that set of pointers is at <code>0x0810CCB8</code>).</li>
+               <li>If you modify the ASM to support more than five rematch flags per row, then you will need to modify the table's structure to match. It should be as simple as adding <code>0x0000</code> entries for new rematch flags to each row.</li>
+            </ul>
+         </div>
+      </div>
+      <hr>
+      <h2>Sources</h2>
+      <ol>
+         <li><a name="var-limits-pc" href="http://www.pokecommunity.com/showthread.php?p=6101240#post6101240">Post by JPAN</a> in <a href="http://www.pokecommunity.com/showthread.php?t=205158">Quick Research/Development Thread</a></li>
+         <li><a name="max-call-depth" href="http://www.pokecommunity.com/showpost.php?p=6804537&postcount=139">Post by JPAN</a> in <a href="http://www.pokecommunity.com/showthread.php?t=205158">Quick Research/Development Thread</a></li>
+         <li><a name="warpteleport-use-cases" href="http://www.pokecommunity.com/showpost.php?p=4128468&postcount=18">Post by HackMew</a> in <a href="http://www.pokecommunity.com/showthread.php?t=160034">[Scripting] Command Database Naming</a></li>
+      </ol>
+
+      <div id="bottom_bar">
+         <a href="#">back to top</a>
+      </div>
+   </body>
+</html>

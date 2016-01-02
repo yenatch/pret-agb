@@ -1,0 +1,2264 @@
+names:
+    std:
+        0x00:
+        - nop0
+        0x01:
+        - nop1
+        0x02:
+        - end
+        0x03:
+        - return
+        0x04:
+        - call
+        0x05:
+        - jump
+        0x06:
+        - if
+        0x07:
+        - if
+        0x08:
+        - jumpstd
+        0x09:
+        - callstd
+        0x0A:
+        - if
+        0x0B:
+        - if
+        0x0C:
+        - jumpram
+        0x0D:
+        - die
+        0x0E:
+        - setbyte
+        0x0F:
+        - loadptr
+        0x10:
+        - setbufferbyte
+        0x11:
+        - writebytetooffset
+        0x12:
+        - loadbytefrompointer
+        0x13:
+        - setptrbyte
+        0x14:
+        - copybuffers
+        0x15:
+        - copybyte
+        0x16:
+        - setvar
+        0x17:
+        - addvar
+        0x18:
+        - subvar
+        0x19:
+        - copyvar
+        0x1A:
+        - setorcopyvar
+        0x1B:
+        - comparebuffers
+        0x1C:
+        - comparebuffertobyte
+        0x1D:
+        - comparebuffertoptrbyte
+        0x1E:
+        - compareptrbytetobuffer
+        0x1F:
+        - compareptrbytetobyte
+        0x20:
+        - compareptrbytes
+        0x21:
+        - compare
+        0x22:
+        - comparevars
+        0x23:
+        - callasm
+        0x24:
+        - jumpasm
+        0x25:
+        - special
+        0x26:
+        - specialval
+        0x27:
+        - waitstate
+        0x28:
+        - pause
+        0x29:
+        - setflag
+        0x2A:
+        - clearflag
+        0x2B:
+        - checkflag
+        0x2C:
+        - compareflags
+        0x2D:
+        - checkdailyflags
+        0x2E:
+        - resetvars
+        0x2F:
+        - playsfx
+        0x30:
+        - checksound
+        0x31:
+        - fanfare
+        0x32:
+        - waitfanfare
+        0x33:
+        - playmusic
+        0x34:
+        - playmusicbattle
+        0x35:
+        - fadedefault
+        0x36:
+        - fademusic
+        0x37:
+        - fadeout
+        0x38:
+        - fadein
+        0x39:
+        - warp
+        0x3A:
+        - warpmuted
+        0x3B:
+        - warpwalk
+        0x3C:
+        - warphole
+        0x3D:
+        - warpteleport
+        0x3E:
+        - warp3
+        0x3F:
+        - warpplace
+        0x40:
+        - warp4
+        0x41:
+        - warp5
+        0x42:
+        - getplayerxy
+        0x43:
+        - countpokemon
+        0x44:
+        - additem
+        0x45:
+        - removeitem
+        0x46:
+        - checkitemspace
+        0x47:
+        - checkitem
+        0x48:
+        - checkitemtype
+        0x49:
+        - addpcitem
+        0x4A:
+        - checkpcitem
+        0x4B:
+        - adddecor
+        0x4C:
+        - removedecor
+        0x4D:
+        - testdecor
+        0x4E:
+        - checkdecor
+        0x4F:
+        - move
+        0x50:
+        - movecoords
+        0x51:
+        - waitmove
+        0x52:
+        - waitmovexy
+        0x53:
+        - disappear
+        0x54:
+        - disappearxy
+        0x55:
+        - reappear
+        0x56:
+        - reappearxy
+        0x57:
+        - movesprite
+        0x58:
+        - spritevisible
+        0x59:
+        - spriteinvisible
+        0x5A:
+        - spriteface
+        0x5B:
+        - faceplayer
+        0x5C:
+        - trainerbattle
+        0x5D:
+        - reptrainerbattle
+        0x5E:
+        - endtrainerbattle
+        0x5F:
+        - endtrainerbattle2
+        0x60:
+        - checktrainerflag
+        0x61:
+        - cleartrainerflag
+        0x62:
+        - settrainerflag
+        0x63:
+        - movespriteperm
+        0x64:
+        - moveoffscreen
+        0x65:
+        - spritebehave
+        0x66:
+        - waittext
+        0x67:
+        - message
+        0x68:
+        - closebutton
+        0x69:
+        - lockall
+        0x6A:
+        - lock
+        0x6B:
+        - releaseall
+        0x6C:
+        - release
+        0x6D:
+        - waitbutton
+        0x6E:
+        - yesnobox
+        0x6F:
+        - multichoice
+        0x70:
+        - multichoicedef
+        0x71:
+        - multichoicerow
+        0x72:
+        - showbox
+        0x73:
+        - hidebox
+        0x74:
+        - clearbox
+        0x75:
+        - showpokepic
+        0x76:
+        - hidepokepic
+        0x77:
+        - showcontestwinner
+        0x78:
+        - braille
+        0x79:
+        - givepokemon
+        0x7A:
+        - giveegg
+        0x7B:
+        - setpokemove
+        0x7C:
+        - checkattack
+        0x7D:
+        - bufferpoke
+        0x7E:
+        - bufferfirstpoke
+        0x7F:
+        - bufferpartypoke
+        0x80:
+        - bufferitem
+        0x81:
+        - bufferdecor
+        0x82:
+        - bufferattack
+        0x83:
+        - buffernum
+        0x84:
+        - bufferstd
+        0x85:
+        - buffertext
+        0x86:
+        - pokemart
+        0x87:
+        - pokemartdecor
+        0x88:
+        - pokemartbp
+        0x89:
+        - pokecasino
+        0x8A:
+        - ~
+        0x8B:
+        - choosecontestpkmn
+        0x8C:
+        - startcontest
+        0x8D:
+        - showcontestresults
+        0x8E:
+        - contestlinktransfer
+        0x8F:
+        - random
+        0x90:
+        - givemoney
+        0x91:
+        - paymoney
+        0x92:
+        - checkmoney
+        0x93:
+        - showmoney
+        0x94:
+        - hidemoney
+        0x95:
+        - updatemoney
+        0x96:
+        - ~
+        0x97:
+        - fadescreen
+        0x98:
+        - fadescreendelay
+        0x99:
+        - darken
+        0x9A:
+        - lighten
+        0x9B:
+        - message2
+        0x9C:
+        - doanimation
+        0x9D:
+        - setanimation
+        0x9E:
+        - checkanimation
+        0x9F:
+        - sethealplace
+        0xA0:
+        - checkgender
+        0xA1:
+        - pokecry
+        0xA2:
+        - setmaptile
+        0xA3:
+        - resetweather
+        0xA4:
+        - setweather
+        0xA5:
+        - doweather
+        0xA6:
+        - ~
+        0xA7:
+        - setmapfooter
+        0xA8:
+        - spritelevelup
+        0xA9:
+        - restorespritelevel
+        0xAA:
+        - createvsprite
+        0xAB:
+        - vspriteface
+        0xAC:
+        - setdooropened
+        0xAD:
+        - setdoorclosed
+        0xAE:
+        - doorchange
+        0xAF:
+        - setdooropened2
+        0xB0:
+        - setdoorclosed2
+        0xB1:
+        - ~
+        0xB2:
+        - ~
+        0xB3:
+        - checkcoins
+        0xB4:
+        - givecoins
+        0xB5:
+        - removecoins
+        0xB6:
+        - setwildbattle
+        0xB7:
+        - dowildbattle
+        0xB8:
+        - setvaddress
+        0xB9:
+        - vjump
+        0xBA:
+        - vcall
+        0xBB:
+        - if
+        0xBC:
+        - if
+        0xBD:
+        - vtext
+        0xBE:
+        - vloadptr
+        0xBF:
+        - vbuffer
+        0xC0:
+        - showcoins
+        0xC1:
+        - hidecoins
+        0xC2:
+        - updatecoins
+        0xC3:
+        - ~
+        0xC4:
+        - warp6
+        0xC5:
+        - waitpokecry
+        0xC6:
+        - bufferboxname
+        0xC7:
+        - textcolor
+        0xC8:
+        - ~
+        0xC9:
+        - ~
+        0xCA:
+        - signmsg
+        0xCB:
+        - normalmsg
+        0xCC:
+        - comparehiddenvar
+        0xCD:
+        - setobedience
+        0xCE:
+        - checkobedience
+        0xCF:
+        - execram
+        0xD0:
+        - setworldflag
+        0xD1:
+        - warpteleport2
+        0xD2:
+        - setcatchlocale
+        0xD3:
+        - braille2
+        0xD4:
+        - storeitems
+        0xD5:
+        - ~
+        0xD6:
+        - ~
+        0xD7:
+        - warp7
+        0xD8:
+        - ~
+        0xD9:
+        - ~
+        0xDA:
+        - hidebox2
+        0xDB:
+        - message3
+        0xDC:
+        - fadescreen3
+        0xDD:
+        - buffertrainerclass
+        0xDE:
+        - buffertrainername
+        0xDF:
+        - pokenavcall
+        0xE0:
+        - warp8
+        0xE1:
+        - buffercontesttype
+        0xE2:
+        - storeitems
+        0xE3:
+        - ~
+        0xE4:
+        - ~
+        0xE5:
+        - ~
+        0xE6:
+        - ~
+        0xE7:
+        - ~
+        0xE8:
+        - ~
+        0xE9:
+        - ~
+        0xEA:
+        - ~
+        0xEB:
+        - ~
+        0xEC:
+        - ~
+        0xED:
+        - ~
+        0xEE:
+        - ~
+        0xEF:
+        - ~
+        0xF0:
+        - ~
+        0xF1:
+        - ~
+        0xF2:
+        - ~
+        0xF3:
+        - ~
+        0xF4:
+        - ~
+        0xF5:
+        - ~
+        0xF6:
+        - ~
+        0xF7:
+        - ~
+        0xF8:
+        - ~
+        0xF9:
+        - ~
+        0xFA:
+        - ~
+        0xFB:
+        - ~
+        0xFC:
+        - ~
+        0xFD:
+        - ~
+        0xFE:
+        - ~
+        0xFF:
+        - ~
+        
+    xse:
+        0x00:
+        - nop
+        - nop0
+        0x01:
+        - nop1
+        0x02:
+        - end
+        0x03:
+        - return
+        0x04:
+        - call
+        0x05:
+        - goto
+        0x06:
+        - if
+        0x07:
+        - if
+        0x08:
+        - gotostd
+        0x09:
+        - callstd
+        - gosubstd
+        0x0A:
+        - if
+        0x0B:
+        - if
+        0x0C:
+        - gotoram
+        0x0D:
+        - killscript
+        0x0E:
+        - setbyte
+        0x0F:
+        - loadpointer
+        - msgbox
+        0x10:
+        - setbyte2
+        0x11:
+        - writebytetooffset
+        0x12:
+        - loadbytefrompointer
+        0x13:
+        - setfarbyte
+        0x14:
+        - copyscriptbanks
+        0x15:
+        - copybyte
+        0x16:
+        - setvar
+        0x17:
+        - addvar
+        0x18:
+        - subvar
+        0x19:
+        - copyvar
+        0x1A:
+        - copyvarifnotzero
+        0x1B:
+        - comparebanks
+        0x1C:
+        - comparebanktobyte
+        0x1D:
+        - comparebanktofarbyte
+        0x1E:
+        - comparefarbytetobank
+        0x1F:
+        - comparefarbytetobyte
+        0x20:
+        - comparefarbytes
+        0x21:
+        - compare
+        0x22:
+        - comparevars
+        0x23:
+        - callasm
+        0x24:
+        - gotoasm
+        0x25:
+        - special
+        0x26:
+        - special2
+        0x27:
+        - waitstate
+        0x28:
+        - pause
+        0x29:
+        - setflag
+        0x2A:
+        - clearflag
+        0x2B:
+        - checkflag
+        0x2C:
+        - compareflags
+        0x2D:
+        - checkdailyflags
+        0x2E:
+        - resetvars
+        0x2F:
+        - sound
+        0x30:
+        - checksound
+        0x31:
+        - fanfare
+        0x32:
+        - waitfanfare
+        0x33:
+        - playsound
+        0x34:
+        - playsong
+        0x35:
+        - fadedefault
+        0x36:
+        - fadesong
+        0x37:
+        - fadeout
+        0x38:
+        - fadein
+        0x39:
+        - warp
+        0x3A:
+        - warpmuted
+        0x3B:
+        - warpwalk
+        0x3C:
+        - warphole
+        0x3D:
+        - warpteleport
+        0x3E:
+        - warp3
+        0x3F:
+        - warpplace
+        0x40:
+        - warp4
+        0x41:
+        - warp5
+        0x42:
+        - getplayerxy
+        0x43:
+        - countpokemon
+        0x44:
+        - additem
+        0x45:
+        - removeitem
+        0x46:
+        - checkitemroom
+        0x47:
+        - checkitem
+        0x48:
+        - checkitemtype
+        0x49:
+        - addpcitem
+        0x4A:
+        - checkpcitem
+        0x4B:
+        - adddecoration
+        0x4C:
+        - removedecoration
+        0x4D:
+        - testdecoration
+        0x4E:
+        - checkdecoration
+        0x4F:
+        - applymovement
+        0x50:
+        - applymovementxy
+        0x51:
+        - pauseevent
+        0x52:
+        - pauseeventxy
+        0x53:
+        - disappear
+        0x54:
+        - disappearxy
+        0x55:
+        - reappear
+        0x56:
+        - reappearxy
+        0x57:
+        - movesprite
+        0x58:
+        - spritevisible
+        0x59:
+        - spriteinvisible
+        0x5A:
+        - spriteface
+        0x5B:
+        - faceplayer
+        0x5C:
+        - trainerbattle
+        0x5D:
+        - repeattrainerbattle
+        0x5E:
+        - endtrainerbattle
+        0x5F:
+        - endtrainerbattle2
+        0x60:
+        - checktrainerflag
+        0x61:
+        - cleartrainerflag
+        0x62:
+        - settrainerflag
+        0x63:
+        - movesprite2
+        0x64:
+        - moveoffscreen
+        0x65:
+        - spritebehave
+        0x66:
+        - showmsg
+        0x67:
+        - message
+        0x68:
+        - closemsg
+        0x69:
+        - lockall
+        0x6A:
+        - lock
+        0x6B:
+        - releaseall
+        0x6C:
+        - release
+        0x6D:
+        - waitbutton
+        0x6E:
+        - yesnobox
+        0x6F:
+        - multichoice
+        0x70:
+        - multichoice2
+        0x71:
+        - multichoice3
+        0x72:
+        - showbox
+        0x73:
+        - hidebox
+        0x74:
+        - clearbox
+        0x75:
+        - showpokepic
+        0x76:
+        - hidepokepic
+        0x77:
+        - showcontestwinner
+        0x78:
+        - braille
+        0x79:
+        - givepokemon
+        0x7A:
+        - giveegg
+        0x7B:
+        - setpkmnpp
+        0x7C:
+        - checkattack
+        0x7D:
+        - bufferpokemon
+        0x7E:
+        - bufferfirstpokemon
+        0x7F:
+        - bufferpartypokemon
+        0x80:
+        - bufferitem
+        0x81:
+        - bufferdecoration
+        0x82:
+        - bufferattack
+        0x83:
+        - ~
+        0x84:
+        - ~
+        0x85:
+        - buffertext
+        0x86:
+        - pokemart
+        0x87:
+        - pokemart2
+        0x88:
+        - pokemart3
+        0x89:
+        - pokecasino
+        0x8A:
+        - ~
+        0x8B:
+        - choosecontestpkmn
+        0x8C:
+        - startcontest
+        0x8D:
+        - showcontestresults
+        0x8E:
+        - contestlinktransfer
+        0x8F:
+        - random
+        0x90:
+        - givemoney
+        0x91:
+        - paymoney
+        0x92:
+        - checkmoney
+        0x93:
+        - showmoney
+        0x94:
+        - hidemoney
+        0x95:
+        - updatemoney
+        0x96:
+        - ~
+        0x97:
+        - fadescreen
+        0x98:
+        - fadescreendelay
+        0x99:
+        - darken
+        0x9A:
+        - lighten
+        0x9B:
+        - message2
+        0x9C:
+        - doanimation
+        0x9D:
+        - setanimation
+        0x9E:
+        - checkanimation
+        0x9F:
+        - sethealingplace
+        0xA0:
+        - checkgender
+        0xA1:
+        - cry
+        0xA2:
+        - setmaptile
+        0xA3:
+        - resetweather
+        0xA4:
+        - setweather
+        0xA5:
+        - doweather
+        0xA6:
+        - ~
+        0xA7:
+        - setmapfooter
+        0xA8:
+        - spritelevelup
+        0xA9:
+        - rebufferspritelevel
+        0xAA:
+        - createsprite
+        0xAB:
+        - movesprite2
+        0xAC:
+        - setdooropened
+        0xAD:
+        - setdoorclosed
+        0xAE:
+        - doorchange
+        0xAF:
+        - setdooropened2
+        0xB0:
+        - setdoorclosed2
+        0xB1:
+        - ~
+        0xB2:
+        - ~
+        0xB3:
+        - checkcoins
+        0xB4:
+        - givecoins
+        0xB5:
+        - removecoins
+        0xB6:
+        - setwildbattle
+        0xB7:
+        - dowildbattle
+        0xB8:
+        - setvirtualaddress
+        0xB9:
+        - virtualgoto
+        0xBA:
+        - virtualcall
+        0xBB:
+        - virtualgotoif
+        0xBC:
+        - virtualcallif
+        0xBD:
+        - fakemsgbox
+        0xBE:
+        - fakeloadpointer
+        0xBF:
+        - fakebuffer
+        0xC0:
+        - showcoins
+        0xC1:
+        - hidecoins
+        0xC2:
+        - updatecoins
+        0xC3:
+        - ~
+        0xC4:
+        - warp6
+        0xC5:
+        - waitcry
+        0xC6:
+        - bufferboxname
+        0xC7:
+        - textcolor
+        0xC8:
+        - ~
+        0xC9:
+        - ~
+        0xCA:
+        - signmsg
+        0xCB:
+        - normalmsg
+        0xCC:
+        - comparehiddenvar
+        0xCD:
+        - setobedience
+        0xCE:
+        - checkobedience
+        0xCF:
+        - executeram
+        0xD0:
+        - setworldmapflag
+        0xD1:
+        - warpteleport2
+        0xD2:
+        - setcatchlocation
+        0xD3:
+        - braille2
+        0xD4:
+        - bufferitems
+        0xD5:
+        - ~
+        0xD6:
+        - ~
+        0xD7:
+        - warp7
+        0xD8:
+        - ~
+        0xD9:
+        - ~
+        0xDA:
+        - hidebox2
+        0xDB:
+        - preparemsg3
+        0xDC:
+        - fadescreen3
+        0xDD:
+        - buffertrainerclass
+        0xDE:
+        - buffertrainername
+        0xDF:
+        - pokenavcall
+        0xE0:
+        - warp8
+        0xE1:
+        - buffercontesttype
+        0xE2:
+        - bufferitems
+        0xE3:
+        - ~
+        0xE4:
+        - ~
+        0xE5:
+        - ~
+        0xE6:
+        - ~
+        0xE7:
+        - ~
+        0xE8:
+        - ~
+        0xE9:
+        - ~
+        0xEA:
+        - ~
+        0xEB:
+        - ~
+        0xEC:
+        - ~
+        0xED:
+        - ~
+        0xEE:
+        - ~
+        0xEF:
+        - ~
+        0xF0:
+        - ~
+        0xF1:
+        - ~
+        0xF2:
+        - ~
+        0xF3:
+        - ~
+        0xF4:
+        - ~
+        0xF5:
+        - ~
+        0xF6:
+        - ~
+        0xF7:
+        - ~
+        0xF8:
+        - ~
+        0xF9:
+        - ~
+        0xFA:
+        - ~
+        0xFB:
+        - ~
+        0xFC:
+        - ~
+        0xFD:
+        - ~
+        0xFE:
+        - ~
+        0xFF:
+        - ~
+        
+    pksv:
+        0x00:
+        - nop
+        - nop0
+        0x01:
+        - nop1
+        0x02:
+        - end
+        0x03:
+        - return
+        0x04:
+        - call
+        0x05:
+        - jump
+        0x06:
+        - if
+        0x07:
+        - if
+        0x08:
+        - jumpstd
+        0x09:
+        - callstd
+        - gosubstd
+        0x0A:
+        - if
+        0x0B:
+        - if
+        0x0C:
+        - jumpram
+        0x0D:
+        - killscript
+        0x0E:
+        - setbyte
+        0x0F:
+        - loadpointer
+        - msgbox
+        0x10:
+        - setbyte2
+        0x11:
+        - writebytetooffset
+        0x12:
+        - loadbytefrompointer
+        0x13:
+        - setfarbyte
+        0x14:
+        - copyscriptbanks
+        0x15:
+        - copybyte
+        0x16:
+        - setvar
+        0x17:
+        - addvar
+        0x18:
+        - subvar
+        0x19:
+        - copyvar
+        0x1A:
+        - copyvarifnotzero
+        0x1B:
+        - comparebanks
+        0x1C:
+        - comparebanktobyte
+        0x1D:
+        - comparebanktofarbyte
+        0x1E:
+        - comparefarbytetobank
+        0x1F:
+        - comparefarbytetobyte
+        0x20:
+        - comparefarbytes
+        0x21:
+        - compare
+        0x22:
+        - comparevars
+        0x23:
+        - callasm
+        0x24:
+        - jumpasm
+        0x25:
+        - special
+        0x26:
+        - special2
+        0x27:
+        - waitstate
+        0x28:
+        - pause
+        0x29:
+        - setflag
+        0x2A:
+        - clearflag
+        0x2B:
+        - checkflag
+        0x2C:
+        - compareflags
+        0x2D:
+        - checkdailyflags
+        0x2E:
+        - resetvars
+        0x2F:
+        - sound
+        0x30:
+        - checksound
+        0x31:
+        - fanfare
+        0x32:
+        - waitfanfare
+        0x33:
+        - playsound
+        0x34:
+        - playsong
+        0x35:
+        - fadedefault
+        0x36:
+        - fadesong
+        0x37:
+        - fadeout
+        0x38:
+        - fadein
+        0x39:
+        - warp
+        0x3A:
+        - warpmuted
+        0x3B:
+        - warpwalk
+        0x3C:
+        - warphole
+        0x3D:
+        - warpteleport
+        0x3E:
+        - warp3
+        0x3F:
+        - warpplace
+        0x40:
+        - warp4
+        0x41:
+        - warp5
+        0x42:
+        - getplayerxy
+        0x43:
+        - countpokemon
+        0x44:
+        - additem
+        0x45:
+        - removeitem
+        0x46:
+        - checkitemroom
+        0x47:
+        - checkitem
+        0x48:
+        - checkitemtype
+        0x49:
+        - addpcitem
+        0x4A:
+        - checkpcitem
+        0x4B:
+        - adddecoration
+        0x4C:
+        - removedecoration
+        0x4D:
+        - testdecoration
+        0x4E:
+        - checkdecoration
+        0x4F:
+        - applymovement
+        0x50:
+        - applymovementxy
+        0x51:
+        - pauseevent
+        0x52:
+        - pauseeventxy
+        0x53:
+        - disappear
+        0x54:
+        - disappearxy
+        0x55:
+        - reappear
+        0x56:
+        - reappearxy
+        0x57:
+        - movesprite
+        0x58:
+        - spritevisible
+        0x59:
+        - spriteinvisible
+        0x5A:
+        - spriteface
+        0x5B:
+        - faceplayer
+        0x5C:
+        - trainerbattle
+        0x5D:
+        - repeattrainerbattle
+        0x5E:
+        - endtrainerbattle
+        0x5F:
+        - endtrainerbattle2
+        0x60:
+        - checktrainerflag
+        0x61:
+        - cleartrainerflag
+        0x62:
+        - settrainerflag
+        0x63:
+        - movesprite2
+        0x64:
+        - moveoffscreen
+        0x65:
+        - spritebehave
+        0x66:
+        - showmsg
+        0x67:
+        - message
+        0x68:
+        - closemsg
+        0x69:
+        - lockall
+        0x6A:
+        - lock
+        0x6B:
+        - releaseall
+        0x6C:
+        - release
+        0x6D:
+        - waitbutton
+        0x6E:
+        - yesnobox
+        0x6F:
+        - multichoice
+        0x70:
+        - multichoice2
+        0x71:
+        - multichoice3
+        0x72:
+        - showbox
+        0x73:
+        - hidebox
+        0x74:
+        - clearbox
+        0x75:
+        - showpokepic
+        0x76:
+        - hidepokepic
+        0x77:
+        - showcontestwinner
+        0x78:
+        - braille
+        0x79:
+        - givepokemon
+        0x7A:
+        - giveegg
+        0x7B:
+        - setpkmnpp
+        0x7C:
+        - checkattack
+        0x7D:
+        - storepokemon
+        0x7E:
+        - storefirstpokemon
+        0x7F:
+        - storepartypokemon
+        0x80:
+        - storeitem
+        0x81:
+        - storedecoration
+        0x82:
+        - storeattack
+        0x83:
+        - ~
+        0x84:
+        - ~
+        0x85:
+        - storetext
+        0x86:
+        - pokemart
+        0x87:
+        - pokemart2
+        0x88:
+        - pokemart3
+        0x89:
+        - pokecasino
+        0x8A:
+        - ~
+        0x8B:
+        - choosecontestpkmn
+        0x8C:
+        - startcontest
+        0x8D:
+        - showcontestresults
+        0x8E:
+        - contestlinktransfer
+        0x8F:
+        - random
+        0x90:
+        - givemoney
+        0x91:
+        - paymoney
+        0x92:
+        - checkmoney
+        0x93:
+        - showmoney
+        0x94:
+        - hidemoney
+        0x95:
+        - updatemoney
+        0x96:
+        - ~
+        0x97:
+        - fadescreen
+        0x98:
+        - fadescreendelay
+        0x99:
+        - darken
+        0x9A:
+        - lighten
+        0x9B:
+        - message2
+        0x9C:
+        - doanimation
+        0x9D:
+        - setanimation
+        0x9E:
+        - checkanimation
+        0x9F:
+        - sethealingplace
+        0xA0:
+        - checkgender
+        0xA1:
+        - cry
+        0xA2:
+        - setmaptile
+        0xA3:
+        - resetweather
+        0xA4:
+        - setweather
+        0xA5:
+        - doweather
+        0xA6:
+        - ~
+        0xA7:
+        - setmapfooter
+        0xA8:
+        - spritelevelup
+        0xA9:
+        - restorespritelevel
+        0xAA:
+        - createsprite
+        0xAB:
+        - movesprite2
+        0xAC:
+        - setdooropened
+        0xAD:
+        - setdoorclosed
+        0xAE:
+        - doorchange
+        0xAF:
+        - setdooropened2
+        0xB0:
+        - setdoorclosed2
+        0xB1:
+        - ~
+        0xB2:
+        - ~
+        0xB3:
+        - checkcoins
+        0xB4:
+        - givecoins
+        0xB5:
+        - removecoins
+        0xB6:
+        - setwildbattle
+        0xB7:
+        - dowildbattle
+        0xB8:
+        - setvirtualaddress
+        0xB9:
+        - virtualjump
+        0xBA:
+        - virtualcall
+        0xBB:
+        - virtualjumpif
+        0xBC:
+        - virtualcallif
+        0xBD:
+        - fakemsgbox
+        0xBE:
+        - fakeloadpointer
+        0xBF:
+        - fakestore
+        0xC0:
+        - showcoins
+        0xC1:
+        - hidecoins
+        0xC2:
+        - updatecoins
+        0xC3:
+        - ~
+        0xC4:
+        - warp6
+        0xC5:
+        - waitcry
+        0xC6:
+        - storeboxname
+        0xC7:
+        - textcolor
+        0xC8:
+        - ~
+        0xC9:
+        - ~
+        0xCA:
+        - signmsg
+        0xCB:
+        - normalmsg
+        0xCC:
+        - comparehiddenvar
+        0xCD:
+        - setobedience
+        0xCE:
+        - checkobedience
+        0xCF:
+        - executeram
+        0xD0:
+        - setworldmapflag
+        0xD1:
+        - warpteleport2
+        0xD2:
+        - setcatchlocation
+        0xD3:
+        - braille2
+        0xD4:
+        - storeitems
+        0xD5:
+        - ~
+        0xD6:
+        - ~
+        0xD7:
+        - warp7
+        0xD8:
+        - ~
+        0xD9:
+        - ~
+        0xDA:
+        - hidebox2
+        0xDB:
+        - preparemsg3
+        0xDC:
+        - fadescreen3
+        0xDD:
+        - storetrainerclass
+        0xDE:
+        - storetrainername
+        0xDF:
+        - pokenavcall
+        0xE0:
+        - warp8
+        0xE1:
+        - storecontesttype
+        0xE2:
+        - storeitems
+        0xE3:
+        - ~
+        0xE4:
+        - ~
+        0xE5:
+        - ~
+        0xE6:
+        - ~
+        0xE7:
+        - ~
+        0xE8:
+        - ~
+        0xE9:
+        - ~
+        0xEA:
+        - ~
+        0xEB:
+        - ~
+        0xEC:
+        - ~
+        0xED:
+        - ~
+        0xEE:
+        - ~
+        0xEF:
+        - ~
+        0xF0:
+        - ~
+        0xF1:
+        - ~
+        0xF2:
+        - ~
+        0xF3:
+        - ~
+        0xF4:
+        - ~
+        0xF5:
+        - ~
+        0xF6:
+        - ~
+        0xF7:
+        - ~
+        0xF8:
+        - ~
+        0xF9:
+        - ~
+        0xFA:
+        - ~
+        0xFB:
+        - ~
+        0xFC:
+        - ~
+        0xFD:
+        - ~
+        0xFE:
+        - ~
+        0xFF:
+        - ~
+        
+
+structs:
+    0x00:
+    - ~
+    0x01:
+    - ~
+    0x02:
+    - ~
+    0x03:
+    - ~
+    0x04:
+    - pointer
+    0x05:
+    - pointer
+    0x06:
+    - byte
+    - pointer
+    0x07:
+    - byte
+    - pointer
+    0x08:
+    - byte
+    0x09:
+    - byte
+    0x0A:
+    - byte
+    - byte
+    0x0B:
+    - byte
+    - byte
+    0x0C:
+    - ~
+    0x0D:
+    - ~
+    0x0E:
+    - byte
+    0x0F:
+    - byte
+    - pointer
+    0x10:
+    - byte
+    - byte
+    0x11:
+    - byte
+    - pointer
+    0x12:
+    - byte
+    - pointer
+    0x13:
+    - byte
+    - pointer
+    0x14:
+    - byte
+    - byte
+    0x15:
+    - pointer
+    - pointer
+    0x16:
+    - word
+    - word
+    0x17:
+    - word
+    - word
+    0x18:
+    - word
+    - word
+    0x19:
+    - word
+    - word
+    0x1A:
+    - word
+    - word
+    0x1B:
+    - word
+    - word
+    0x1C:
+    - byte
+    - byte
+    0x1D:
+    - byte
+    - pointer
+    0x1E:
+    - pointer
+    - byte
+    0x1F:
+    - pointer
+    - byte
+    0x20:
+    - pointer
+    - pointer
+    0x21:
+    - word
+    - word
+    0x22:
+    - word
+    - word
+    0x23:
+    - pointer
+    0x24:
+    - pointer
+    0x25:
+    - word
+    0x26:
+    - word
+    - word
+    0x27:
+    - ~
+    0x28:
+    - word
+    0x29:
+    - word
+    0x2A:
+    - word
+    0x2B:
+    - word
+    0x2C:
+    - word
+    - word
+    0x2D:
+    - ~
+    0x2E:
+    - ~
+    0x2F:
+    - word
+    0x30:
+    - ~
+    0x31:
+    - word
+    0x32:
+    - ~
+    0x33:
+    - word
+    - byte
+    0x34:
+    - word
+    0x35:
+    - ~
+    0x36:
+    - word
+    0x37:
+    - byte
+    0x38:
+    - byte
+    0x39:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x3A:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x3B:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x3C:
+    - byte
+    - byte
+    0x3D:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x3E:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x3F:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x40:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x41:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0x42:
+    - word
+    - word
+    0x43:
+    - ~
+    0x44:
+    - word
+    - word
+    0x45:
+    - word
+    - word
+    0x46:
+    - word
+    - word
+    0x47:
+    - word
+    - word
+    0x48:
+    - word
+    0x49:
+    - word
+    - word
+    0x4A:
+    - word
+    - word
+    0x4B:
+    - word
+    0x4C:
+    - word
+    0x4D:
+    - word
+    0x4E:
+    - word
+    0x4F:
+    - word
+    - pointer
+    0x50:
+    - word
+    - pointer
+    - byte
+    - byte
+    0x51:
+    - word
+    0x52:
+    - word
+    - byte
+    - byte
+    0x53:
+    - word
+    0x54:
+    - word
+    - byte
+    - byte
+    0x55:
+    - word
+    0x56:
+    - word
+    - byte
+    - byte
+    0x57:
+    - word
+    - word
+    - word
+    0x58:
+    - word
+    - byte
+    - byte
+    0x59:
+    - word
+    - byte
+    - byte
+    0x5A:
+    - ~
+    0x5B:
+    - word
+    - byte
+    0x5C:
+    - byte
+    - word
+    - word
+    - pointer
+    - pointer
+    0x5D:
+    - ~
+    0x5E:
+    - ~
+    0x5F:
+    - ~
+    0x60:
+    - word
+    0x61:
+    - word
+    0x62:
+    - word
+    0x63:
+    - word
+    - word
+    - word
+    0x64:
+    - word
+    0x65:
+    - word
+    - byte
+    0x66:
+    - ~
+    0x67:
+    - pointer
+    0x68:
+    - ~
+    0x69:
+    - ~
+    0x6A:
+    - ~
+    0x6B:
+    - ~
+    0x6C:
+    - ~
+    0x6D:
+    - ~
+    0x6E:
+    - byte
+    - byte
+    0x6F:
+    - byte
+    - byte
+    - byte
+    - byte
+    0x70:
+    - byte
+    - byte
+    - byte
+    - byte
+    - byte
+    0x71:
+    - byte
+    - byte
+    - byte
+    - byte
+    - byte
+    0x72:
+    - byte
+    - byte
+    - byte
+    - byte
+    0x73:
+    - byte
+    - byte
+    - byte
+    - byte
+    0x74:
+    - byte
+    - byte
+    - byte
+    - byte
+    0x75:
+    - word
+    - byte
+    - byte
+    0x76:
+    - ~
+    0x77:
+    - byte
+    0x78:
+    - pointer
+    0x79:
+    - word
+    - byte
+    - word
+    - dword
+    - ord
+    - dword
+    - ord
+    - byte
+    0x7A:
+    - word
+    0x7B:
+    - byte
+    - byte
+    - word
+    0x7C:
+    - word
+    0x7D:
+    - byte
+    0x7E:
+    - byte
+    - word
+    0x7F:
+    - byte
+    - word
+    0x80:
+    - byte
+    - word
+    0x81:
+    - byte
+    - word
+    0x82:
+    - byte
+    - word
+    0x83:
+    - byte
+    - word
+    0x84:
+    - byte
+    - word
+    0x85:
+    - byte
+    - pointer
+    0x86:
+    - pointer
+    0x87:
+    - pointer
+    0x88:
+    - pointer
+    0x89:
+    - word
+    0x8A:
+    - byte
+    - byte
+    - byte
+    0x8B:
+    - ~
+    0x8C:
+    - ~
+    0x8D:
+    - ~
+    0x8E:
+    - ~
+    0x8F:
+    - word
+    0x90:
+    - dword
+    - ord
+    - word
+    0x91:
+    - dword
+    - ord
+    - word
+    0x92:
+    - dword
+    - ord
+    - word
+    0x93:
+    - byte
+    - byte
+    - byte
+    0x94:
+    - byte
+    - byte
+    0x95:
+    - word
+    0x96:
+    - word
+    0x97:
+    - byte
+    0x98:
+    - byte
+    - byte
+    0x99:
+    - word
+    0x9A:
+    - byte
+    0x9B:
+    - pointer
+    0x9C:
+    - word
+    0x9D:
+    - byte
+    - word
+    0x9E:
+    - word
+    0x9F:
+    - word
+    0xA0:
+    - ~
+    0xA1:
+    - word
+    - word
+    0xA2:
+    - word
+    - word
+    - word
+    - word
+    0xA3:
+    - ~
+    0xA4:
+    - word
+    0xA5:
+    - ~
+    0xA6:
+    - byte
+    0xA7:
+    - word
+    0xA8:
+    - word
+    - byte
+    - byte
+    - byte
+    0xA9:
+    - word
+    - byte
+    - byte
+    0xAA:
+    - byte
+    - byte
+    - word
+    - word
+    - byte
+    - byte
+    0xAB:
+    - byte
+    - byte
+    0xAC:
+    - word
+    - word
+    0xAD:
+    - word
+    - word
+    0xAE:
+    - ~
+    0xAF:
+    - word
+    - word
+    0xB0:
+    - word
+    - word
+    0xB1:
+    - byte
+    - word
+    - byte
+    - word
+    0xB2:
+    - ~
+    0xB3:
+    - word
+    0xB4:
+    - word
+    0xB5:
+    - word
+    0xB6:
+    - word
+    - byte
+    - word
+    0xB7:
+    - ~
+    0xB8:
+    - dword
+    - ord
+    0xB9:
+    - pointer
+    0xBA:
+    - pointer
+    0xBB:
+    - byte
+    - pointer
+    0xBC:
+    - byte
+    - pointer
+    0xBD:
+    - pointer
+    0xBE:
+    - pointer
+    0xBF:
+    - byte
+    - pointer
+    0xC0:
+    - byte
+    - byte
+    0xC1:
+    - byte
+    - byte
+    0xC2:
+    - byte
+    - byte
+    0xC3:
+    - byte
+    0xC4:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0xC5:
+    - ~
+    0xC6:
+    - byte
+    - word
+    0xC7:
+    - byte
+    0xC8:
+    - ~
+    0xC9:
+    - ~
+    0xCA:
+    - ~
+    0xCB:
+    - ~
+    0xCC:
+    - byte
+    - word
+    0xCD:
+    - word
+    0xCE:
+    - word
+    0xCF:
+    - ~
+    0xD0:
+    - word
+    0xD1:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0xD2:
+    - word
+    - byte
+    0xD3:
+    - pointer
+    0xD4:
+    - byte
+    - word
+    - word
+    0xD5:
+    - word
+    0xD6:
+    - ~
+    0xD7:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0xD8:
+    - ~
+    0xD9:
+    - ~
+    0xDA:
+    - ~
+    0xDB:
+    - pointer
+    0xDC:
+    - byte
+    0xDD:
+    - byte
+    - word
+    0xDE:
+    - byte
+    - word
+    0xDF:
+    - pointer
+    0xE0:
+    - byte
+    - byte
+    - byte
+    - word
+    - word
+    0xE1:
+    - byte
+    - word
+    0xE2:
+    - byte
+    - word
+    - word
+    0xE3:
+    - ~
+    0xE4:
+    - ~
+    0xE5:
+    - ~
+    0xE6:
+    - ~
+    0xE7:
+    - ~
+    0xE8:
+    - ~
+    0xE9:
+    - ~
+    0xEA:
+    - ~
+    0xEB:
+    - ~
+    0xEC:
+    - ~
+    0xED:
+    - ~
+    0xEE:
+    - ~
+    0xEF:
+    - ~
+    0xF0:
+    - ~
+    0xF1:
+    - ~
+    0xF2:
+    - ~
+    0xF3:
+    - ~
+    0xF4:
+    - ~
+    0xF5:
+    - ~
+    0xF6:
+    - ~
+    0xF7:
+    - ~
+    0xF8:
+    - ~
+    0xF9:
+    - ~
+    0xFA:
+    - ~
+    0xFB:
+    - ~
+    0xFC:
+    - ~
+    0xFD:
+    - ~
+    0xFE:
+    - ~
+    0xFF:
+    - ~
