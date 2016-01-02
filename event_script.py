@@ -55,21 +55,8 @@ class Braille(ParamGroup):
 
 BraillePointer.target = Braille
 
-class TextLabel(Label):
-    default_label_base = 'Text'
-
-class Text(Chunk):
-    #default_label = TextLabel
-    def parse(self):
-        Chunk.parse(self)
-        self.chunks = []
-        address = self.address
-        #label = self.default_label(address)
-        string = String(address)
-        address += string.length
-        #self.chunks += [label, string]
-        self.chunks += [string]
-        self.last_address = address
+class Text(ParamGroup):
+    param_classes = [String]
 
 TextPointer.target = Text
 
@@ -78,7 +65,6 @@ class EventScriptLabel(Label):
 
 class EventScript(Script):
     commands = event_command_classes
-    #default_label = EventScriptLabel
     def parse(self):
         Script.parse(self)
         self.filter_msgbox()
@@ -130,14 +116,16 @@ def recursive_parse(*args):
         closure['level'] += 1
         #print ' ' * closure['level'], class_, hex(address)
         #sys.stdout.flush()
+
         # container chunk for chunk + label
+        # XXX not the case anymore, is this still required?
         container = Chunk()
         chunk = class_(address, *args_, **kwargs_)
         container.chunks += [chunk]
+
         context = hasattr(chunk, 'context_label')
         if context:
             closure['context_labels'] += [chunk.context_label]
-        #container.chunks += [Label(address)] # i forget why this is required, but it is # not
         chunks[address] = container
         recurse_pointers(container)
         if context:
@@ -147,16 +135,12 @@ def recursive_parse(*args):
         if hasattr(chunk, 'target'):
             if chunk.target: # redundant, but avoids errors
 		if chunk.real_address:
-                    #temp_class = classobj('_TempLabel', (Label,), { 'default_label_base': chunk.target.__name__, 'context_label': closure['context_labels'][-1]})
-                    #label = temp_class(chunk.real_address)
                     label = Label(
                         chunk.real_address,
                         default_label_base=chunk.target.__name__,
                         context_label=closure['context_labels'][-1]
                     )
-                    #chunk.chunks += [label]
                     chunk.label = label
-                    #print chunk.label.asm
                 recurse(chunk.target, chunk.real_address, **chunk.target_args)
         for c in chunk.chunks:
             recurse_pointers(c)
@@ -168,21 +152,24 @@ def print_recursive_event_script(address):
     return print_nested_chunks(scripts)
 
 def print_nested_chunks(*args):
+    return print_chunks(flatten_nested_chunks(*args))
+
+def flatten_nested_chunks(*args):
     closure = {'flattened': []}
     def recurse(chunks, labels_only=False):
         for chunk in chunks:
             if hasattr(chunk, 'label') and chunk.label:
                 closure['flattened'] += [chunk.label]
-                if type(chunk.label) is str:
-                    print chunk.label
             if not labels_only:
-                if hasattr(chunk, 'chunks') and chunk.chunks and not chunk.atomic:
+                if chunk.chunks and not chunk.atomic:
                     recurse(chunk.chunks)
                 else:
                     closure['flattened'] += [chunk]
                     recurse(chunk.chunks, labels_only=True)
+            else:
+                recurse(chunk.chunks, labels_only=True)
     recurse(*args)
-    return print_chunks(closure['flattened'])
+    return closure['flattened']
 
 def print_recursive(class_, address):
 	return print_nested_chunks(recursive_parse(class_, address).values())
@@ -193,6 +180,7 @@ if __name__ == '__main__':
     ap.add_argument('address')
     args = ap.parse_args()
 
-    #print print_nested_chunks([EventScript(int(args.address, 16))]).encode('utf-8')
-    #print print_nested_chunks(recursive_parse(EventScript, int(args.address, 16)).values()).encode('utf-8')
-    print print_recursive(EventScript, int(args.address, 16)).encode('utf-8')
+    print print_recursive(
+        EventScript,
+        int(args.address, 16)
+    ).encode('utf-8')
