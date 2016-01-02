@@ -61,22 +61,6 @@ class List(Chunk):
 				address += group.length
 		self.last_address = address
 
-"""
-class MapGroups(Chunk):
-    def parse(self):
-        Chunk.parse(self)
-        self.chunks = []
-        address = self.address
-	self.chunks += [Label(address)]
-	map_groups = read_map_groups()
-        for group in map_groups:
-            group_pointer = MapGroupPointer(address)
-            group_pointer.group = group
-            self.chunks += [group_pointer]
-            address += group_pointer.length
-        self.last_address = address
-"""
-
 # yes this is alive code
 class MapGroup(List):
     def parse(self):
@@ -92,25 +76,6 @@ class MapGroup(List):
             chunk.chunks += [label]
             chunk.label = label
         #self.chunks += [Label(self.address)]
-
-"""
-class MapGroup(Chunk):
-    def parse(self):
-        Chunk.parse(self)
-        self.chunks = []
-        self.chunks += [MapGroupLabel(self.address)]
-        address = self.address
-        for num in map_groups[self.group]:
-            map_pointer = MapPointer(address)
-            map_pointer.group = self.group
-            map_pointer.num = num
-            self.chunks += [map_pointer]
-            address += map_pointer.length
-        self.last_address = address
-
-class MapGroupLabel(Label):
-    default_label_base = 'MapGroup'
-"""
 
 class MapGroupPointer(Pointer):
     target = MapGroup

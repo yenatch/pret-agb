@@ -114,29 +114,6 @@ EventScriptPointer.target = EventScript
 def recursive_event_script(address):
     return recursive_parse(EventScript, address)
 
-    """
-    scripts = {}
-    def recurse(addr):
-        if scripts.get(addr):
-            return
-        script = EventScript(addr)
-        scripts[addr] = script
-        for chunk in script.chunks:
-            if hasattr(chunk, 'chunks'):
-                for param in chunk.chunks:
-                    if isinstance(param, EventScriptPointer):
-                        child = param.real_address
-                        recurse(child)
-                    elif isinstance(param, TextPointer):
-                        child = param.real_address
-                        scripts[child] = Text(child)
-                    elif hasattr(param, 'target'):
-                        child = param.real_address
-                        scripts[child] = param.resolve()
-    recurse(address)
-    return scripts
-    """
-
 def recursive_parse(*args):
     chunks = {}
     closure = {
