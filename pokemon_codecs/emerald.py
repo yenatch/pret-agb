@@ -1,79 +1,60 @@
 # coding: utf-8
 
 """Charmap codec for Pokémon Emerald.
+
+Why a codec? To mess with py3 people.
 """
 
 import codecs
 
-class Codec(codecs.Codec):
+error_chars = {
+	'strict': None,
+	'ignore': u'',
+	'replace': u'?',
+}
 
-	error_chars = {
-		'strict': None,
-		'ignore': u'',
-		'replace': u'?',
-	}
-
-	def decode(self, input, errors='replace'):
-		default_char = self.error_chars.get(errors)
-		old = bytearray(input)
-		new = u''
-		i = 0
-		len_old = len(old)
-		while i < len_old:
+def decode(input, errors='replace'):
+	default_char = error_chars.get(errors)
+	old = bytearray(input)
+	new = u''
+	i = 0
+	len_old = len(old)
+	while i < len_old:
+		item = emerald_decode
+		while hasattr(item, 'get'):
 			char = old[i]
-			if char == 0xfd:
-				i += 1
-				new += emerald_decode[0xfd].get(old[i], default_char)
-			else:
-				new += emerald_decode.get(char, default_char)
+			item = item.get(char)
 			i += 1
-		return new, i
+		char = item
+		if char is None:
+			char = default_char
+		new += char
+	return new, i
 
-	def encode(self, input, errors='replace'):
-		default_char = self.error_chars.get(errors)
-		old = input
-		new = ''
-		i = 0
-		len_old = len(old)
-		while i < len_old:
-			char = old[i]
-			if char == '{':
-				j = i + old.find('}', i) + 1
-				new += emerald_encode.get(old[i:j], default_char)
-				i = j
-			else:
-				new += emerald_encode.get(char, default_char)
-				i += 1
-		return new, i
+def encode(self, input, errors='replace'):
+	default_char = self.error_chars.get(errors)
+	old = input
+	new = ''
+	i = 0
+	len_old = len(old)
+	while i < len_old:
+		char = old[i]
+		if char == '{':
+			j = i + old.find('}', i) + 1
+			char = old[i:j]
+			i = j
+		else:
+			i += 1
+		new += emerald_encode.get(char, default_char)
+	return new, len(new)
 
-class IncrementalEncoder(codecs.IncrementalEncoder):
-	def encode(self, input, final=False):
-		return Codec().encode(input, self.errors)[0]
-
-class IncrementalDecoder(codecs.IncrementalDecoder):
-	def decode(self, input, final=False):
-		return Codec().decode(input, self.errors)[0]
-
-class StreamWriter(Codec, codecs.StreamWriter):
-	pass
-
-class StreamReader(Codec, codecs.StreamReader):
-	pass
-
-def getregentry():
-	return codecs.CodecInfo(
-		name='emerald',
-		encode=Codec().encode,
-		decode=Codec().decode,
-		incrementalencoder=IncrementalEncoder,
-		incrementaldecoder=IncrementalDecoder,
-		streamreader=StreamReader,
-		streamwriter=StreamWriter,
-	)
-
-def search(search_name):
-	if search_name == 'emerald':
-		return getregentry()
+def search(name):
+	if name == 'emerald':
+		return codecs.CodecInfo(
+			name = name,
+			encode = encode,
+			decode = decode,
+		)
 	return None
 
 codecs.register(search)
