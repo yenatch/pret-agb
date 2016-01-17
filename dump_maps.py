@@ -3,49 +3,12 @@ from new import classobj
 from event_script import *
 
 map_group_pointers_address = 0x486578
-#labels[map_group_pointers_address] = 'gMapGroups'
-
-constants_path = 'constants/map_constants.s'
-
-def read_map_groups():
-	path = constants_path
-	lines = open(path).readlines()
-	variables = {}
-	maps = {}
-	for line in lines:
-		line = line.strip()
-		if line.startswith('.set'):
-			name, value = line.split('.set')[1].split(',')
-			variables[name.strip()] = int(value)
-		elif line.startswith('new_map_group'):
-			variables['cur_map_group'] += 1
-			variables['cur_map_num'] = 0
-			maps[variables['cur_map_group']] = {}
-		elif line.startswith('map_group'):
-			text = line.split('map_group')[1]
-			group, num = map(variables.get, ['cur_map_group','cur_map_num'])
-			name = text.split()[0].title().replace('_','')
-			maps[group][num] = name
-			variables['cur_map_num'] += 1
-	return maps
-
-map_groups = read_map_groups()
 
 def dump_maps():
-	"""Not used, could be broken."""
-	address = map_group_pointers_address
-	chunks = []
-	maps = {}
-	for group in map_groups:
-		pointer = Pointer(address + group * 4)
-		chunks += [pointer]
-		start = pointer.real_address
-		for num, label_name in map_groups[group].items():
-			maps.update(recursive_parse(MapPointer, start + num * 4))
-			#pointer = MapPointer(start + num * 4)
-			#chunks += [pointer]
-			#maps.update(recursive_parse(Map, pointer.real_address))
-	print print_nested_chunks(chunks + maps.values()).encode('utf-8')
+	label = Label(map_group_pointers_address, asm='gMapGroups')
+	chunks = recursive_parse(MapGroups, map_group_pointers_address)
+	chunks[map_group_pointers_address].label = label
+	return chunks.values()
 
 class List(Chunk):
 	param_classes = []
@@ -55,13 +18,30 @@ class List(Chunk):
 		address = self.address
 		count = getattr(self, 'count', 0)
 		for i in xrange(count):
-			for class_ in self.param_classes:
-				group = class_(address)
-				self.chunks += [group]
-				address += group.length
+			for item in self.param_classes:
+				name = None
+				try:
+					name, param_class = item
+				except:
+					param_class = item
+				param = param_class(address)
+				self.chunks += [param]
+				address += param.length
 		self.last_address = address
 
-# yes this is alive code
+class ItemList(List):
+	param_classes = [Item]
+	def parse(self):
+		self.count = 1
+		List.parse(self)
+		while self.chunks[-1].value != 0:
+			self.count += 1
+			List.parse(self)
+class Pokemart(ParamGroup):
+	param_classes = [ItemList, EventScript]
+
+PokemartPointer.target = Pokemart
+
 class MapGroup(List):
     def parse(self):
         self.param_classes = [MapPointer]
@@ -75,7 +55,6 @@ class MapGroup(List):
             label.asm = label_name
             chunk.chunks += [label]
             chunk.label = label
-        #self.chunks += [Label(self.address)]
 
 class MapGroupPointer(Pointer):
     target = MapGroup
@@ -120,7 +99,8 @@ class MapAttributes(ParamGroup):
 class MapAttributesPointer(Pointer):
 	target = MapAttributes
 
-class MapObject(ParamGroup):
+class MapObject(Macro):
+	name = 'object_event'
 	param_classes = [
 		Byte, Word,
 	] + [Byte] * 13 + [
@@ -135,10 +115,14 @@ class MapObjectsPointer(Pointer):
 	target = MapObjects
 	target_arg_names = ['count']
 
-class MapWarp(ParamGroup):
+class MapWarp(Macro):
+	name = 'warp_def'
 	param_classes = [
-		Word, Word,
-		Byte, Byte, Byte, Byte,
+		('x', Word),
+		('y', Word),
+		Byte,
+		('warp', Byte),
+		('map', WarpMapId),
 	]
 class MapWarps(List):
 	param_classes = [MapWarp]
@@ -146,7 +130,8 @@ class MapWarpsPointer(Pointer):
 	target = MapWarps
 	target_arg_names = ['count']
 
-class MapCoordEvent(ParamGroup):
+class MapCoordEvent(Macro):
+	name = 'coord_event'
 	param_classes = [
 		Word, Word,
 		Byte, Byte,
@@ -162,9 +147,10 @@ class MapCoordEventsPointer(Pointer):
 	target_arg_names = ['count']
 
 class HiddenItem(ParamGroup):
-	param_classes = [ Word, Byte, Byte, ]
+	param_classes = [ Item, Byte, Byte, ]
 
-class MapBGEvent(ParamGroup):
+class MapBGEvent(Macro):
+	name = 'bg_event'
 	param_classes = [
 		Word, Word,
 		Byte, ('kind', Byte),
@@ -236,11 +222,51 @@ class MapScripts(ParamGroup):
 class MapScriptsPointer(Pointer):
 	target = MapScripts
 
+class ConnectionDirection(Int):
+	"""Does not stand on its own. Should be used only with MapConnection."""
+	directions = [
+		'0',
+		'down', 'up', 'left', 'right',
+		'dive', 'emerge',
+	]
+	@property
+	def asm(self):
+		return self.directions[self.value]
+
+class SignedInt(Int):
+	def parse(self):
+		Int.parse(self)
+		self.value -= (self.value & 0x80000000) * 2
+	@property
+	def asm(self):
+		return str(self.value)
+
+class MapConnection(Macro):
+	name = 'connection'
+	param_classes = [
+		('direction', ConnectionDirection),
+		('offset', SignedInt),
+		('map', MapId),
+		#('map_group', MapGroupId),
+		#('map_number', MapNumberId),
+		Word, # filler
+	]
+
+class MapConnectionsList(List):
+	param_classes = [MapConnection]
+
+class MapConnectionsListPointer(Pointer):
+	target = MapConnectionsList
+	target_arg_names = ['count']
+
 class MapConnections(ParamGroup):
-	param_classes = [Int, Pointer]
+	param_classes = [
+		('count', Int),
+		('pointer', MapConnectionsListPointer),
+	]
 	def parse(self):
 		ParamGroup.parse(self)
-		self.chunks[1].count = self.chunks[0].value
+		self.params['pointer'].count = self.params['count'].value
 	
 class MapConnectionsPointer(Pointer):
 	target = MapConnections
@@ -337,4 +363,4 @@ MovementPointer.target = Movement
 
 
 if __name__ == '__main__':
-    print print_recursive(MapGroups, map_group_pointers_address).encode('utf-8')
+    print print_nested_chunks(dump_maps())

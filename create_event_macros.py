@@ -267,7 +267,7 @@ def make_event_macro(byte, cmd, enum=False):
 
 		# Forward compatibility: hope it's a class
 		if not macro:
-			macro = param_type.macro_name
+			macro = param_type.name
 
 		arg_behavior.append('\t{macro} \\{param_name}\n'.format(macro=macro, param_name=param_name))
 

@@ -10,8 +10,13 @@ from script import *
 from event_commands import *
 from pokemon_codecs import emerald
 
+force_stop_addresses = [
+	0x209a99, # SlateportCityBattleTent waitstate
+	0x2c8381, # TrainerHill1F missing end
+]
+
 class String(Chunk):
-    macro_name = u'.text'
+    name = '.text'
     atomic = True
     def parse(self):
         Chunk.parse(self)
@@ -25,30 +30,23 @@ class String(Chunk):
     def asm(self):
         return self.bytes.decode('emerald')
     def to_asm(self):
-        newline = u'"\n\t{} "'.format(self.macro_name)
+        newline = '"\n\t{} "'.format(self.name)
         asm = self.asm
-        #for fake_newline in (u'\n', u'\\n', u'{FA}',):
-        #    asm = asm.replace(fake_newline, u' ')
-        asm = asm.replace(u'\n', u'\\n')
-        for newline_token in (u'+', u'\\n', u'{FA}',):
+        asm = asm.replace('\n', '\\n')
+        for newline_token in ('+', '\\n', '{FA}',):
             asm = asm.replace(newline_token, newline_token + newline)
-        return newline[2:] + asm + u'"'
-
-        #lines = []
-        #for line in self.asm.split('\n'):
-        #    lines += [u'\t{} "{}\\n"'.format(self.macro_name, line)]
-        #return '\n'.join(lines)[:-3] + '"'
+        return newline[2:] + asm + '"'
 
 alphabet = map(chr, xrange(ord('A'), ord('Z')+1))
 
 class BrailleString(String):
-    macro_name = u'.braille'
+    name = '.braille'
     letters = [ 1, 5, 3, 11, 9, 7, 15, 13, 6, 14, 17, 21, 19, 27, 25, 23, 31, 29, 22, 30, 49, 53, 46, 51, 59, 57 ]
     mapping = dict(zip(letters, alphabet))
-    mapping.update({ 0: u' ', 28: u'!', 16: u'\'', 4: u',', 48: u'-', 44: u'.', 52: u'?', 8: u'"', 0xfe: u'\n', 0xff: u'$' })
+    mapping.update({ 0: ' ', 28: '!', 16: '\'', 4: ',', 48: '-', 44: '.', 52: '?', 8: '"', 0xfe: '\n', 0xff: '$' })
     @property
     def asm(self):
-        return u''.join(map(self.mapping.get, self.bytes))
+        return ''.join(map(self.mapping.get, self.bytes))
 
 class Braille(ParamGroup):
     param_classes = [Byte, Byte, Byte, Byte, Byte, Byte, ('string', BrailleString)]
@@ -63,12 +61,30 @@ TextPointer.target = Text
 class EventScriptLabel(Label):
     default_label_base = 'Event'
 
+class Comment(Chunk):
+    def to_asm(self):
+        if hasattr(self, 'comment') and self.comment:
+            return '; ' + self.comment
+        return ''
+
 class EventScript(Script):
     commands = event_command_classes
     def parse(self):
         Script.parse(self)
+        self.check_forced_stops()
         self.filter_msgbox()
-        self.check_extra_ends()
+        #self.check_extra_ends()
+    def check_forced_stops(self):
+        """
+        There are some malformed scripts that need to be manually ended.
+        This function rewinds a script if it passes through an address in force_stop_addresses.
+        """
+        for i, chunk in enumerate(self.chunks):
+            if chunk.last_address in force_stop_addresses:
+                self.chunks = self.chunks[:i+1]
+                self.last_address = chunk.last_address
+                self.chunks += [Comment(self.last_address, comment='forced stop')]
+                break
     def check_extra_ends(self):
         address = self.last_address
         byte = Byte(address)
@@ -135,12 +151,13 @@ def recursive_parse(*args):
         if hasattr(chunk, 'target'):
             if chunk.target: # redundant, but avoids errors
 		if chunk.real_address:
-                    label = Label(
-                        chunk.real_address,
-                        default_label_base=chunk.target.__name__,
-                        context_label=closure['context_labels'][-1]
-                    )
-                    chunk.label = label
+                    if not (hasattr(chunk, 'label') and chunk.label):
+                        label = Label(
+                            chunk.real_address,
+                            default_label_base=chunk.target.__name__,
+                            context_label=closure['context_labels'][-1]
+                        )
+                        chunk.label = label
                 recurse(chunk.target, chunk.real_address, **chunk.target_args)
         for c in chunk.chunks:
             recurse_pointers(c)

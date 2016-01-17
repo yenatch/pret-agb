@@ -3,23 +3,36 @@
 """
 
 
-#parsed_chunks = {}
-#def mark_parsed_chunk(instance):
-#    class_ = instance.__class__
-#    address = instance.address
-#    if not parsed_chunks.has_key(class_):
-#        parsed_chunks[class_] = []
-#    parsed_chunks[class_][address] = instance
-#def get_parsed_chunk(class_, address):
-#    return parsed_chunks.get(class_, {}).get(address)
-
-#labels = {}
-#def get_label(address):
-#    return labels.get(address)
-
 def load_rom(filename):
     return bytearray(open(filename).read())
+
 baserom = load_rom('base_emerald.gba')
+
+constants_path = 'constants/map_constants.s'
+
+def read_map_groups():
+	path = constants_path
+	lines = open(path).readlines()
+	variables = {}
+	maps = {}
+	for line in lines:
+		line = line.strip()
+		if line.startswith('.set'):
+			name, value = line.split('.set')[1].split(',')
+			variables[name.strip()] = int(value)
+		elif line.startswith('new_map_group'):
+			variables['cur_map_group'] += 1
+			variables['cur_map_num'] = 0
+			maps[variables['cur_map_group']] = {}
+		elif line.startswith('map_group'):
+			text = line.split('map_group')[1]
+			group, num = map(variables.get, ['cur_map_group','cur_map_num'])
+			name = text.split()[0].title().replace('_','')
+			maps[group][num] = name
+			variables['cur_map_num'] += 1
+	return maps
+
+map_groups = read_map_groups()
 
 class Object(object):
     arg_names = []
@@ -51,7 +64,7 @@ class Param(Chunk):
     def asm(self):
         return str(self.value)
     def to_asm(self):
-        return '\t' + self.macro_name + ' ' + self.asm
+        return '\t' + self.name + ' ' + self.asm
 
 class Value(Param):
     big_endian = False
@@ -68,15 +81,15 @@ class Value(Param):
         self.last_address = self.address + self.num_bytes
 
 class Byte(Value):
-    macro_name = '.byte'
+    name = '.byte'
     num_bytes = 1
 
 class Word(Value):
-    macro_name = '.2byte'
+    name = '.2byte'
     num_bytes = 2
 
 class Int(Value):
-    macro_name = '.4byte'
+    name = '.4byte'
     num_bytes = 4
     @property
     def asm(self):
@@ -139,10 +152,21 @@ class ParamGroup(Chunk):
                 self.params[name] = param
             address += param.length
         self.last_address = address
+    @property
+    def asm(self):
+        return ', '.join(param.asm for param in self.chunks)
 
-class Command(ParamGroup):
-    end = False
+class Item(Word):
+	pass
+
+class Macro(ParamGroup):
     atomic = True
+    def to_asm(self):
+	chunks = self.chunks
+        return '\t' + self.name + ' ' + ', '.join(param.asm for param in chunks)
+
+class Command(Macro):
+    end = False
     def to_asm(self):
         chunks = self.chunks[1:]
         return '\t' + self.name + ' ' + ', '.join(param.asm for param in chunks)
@@ -187,6 +211,32 @@ class Script(Chunk):
     def to_asm(self):
         return print_chunks(self.chunks)
 
+
+class MapId(Macro):
+	name = 'map'
+	param_classes = [
+		('group', Byte),
+		('number', Byte),
+	]
+	@property
+	def asm(self):
+		group = self.params['group'].value
+		number = self.params['number'].value
+		map_name = map_groups.get(group, {}).get(number)
+		if not map_name:
+			return Word(self.address).asm
+		return map_name
+	def to_asm(self):
+		return '\t' + 'map ' + self.asm
+
+class WarpMapId(MapId):
+	"""Reversed MapId."""
+	param_classes = [
+		('number', Byte),
+		('group', Byte),
+	]
+
+
 def print_chunks(chunks):
     def is_label(asm):
         return asm and asm[-1] == ':'
@@ -196,16 +246,23 @@ def print_chunks(chunks):
     for address, last_address, asm in sorted_chunks:
         if previous_address:
             if address > previous_address:
-                if lines and not is_label(lines[-1]):
-                    lines += ['']
-                lines += ['\tbaserom 0x{:x}, 0x{:x}'.format(previous_address, address), '']
+                # awful hack to catch unnecessary ends
+                if address - previous_address == 1 and baserom[previous_address] == 0x2:
+                    lines += ['\tend']
+                else:
+                    if lines and not is_label(lines[-1]):
+                        lines += ['']
+                    lines += ['\tbaserom 0x{:x}, 0x{:x}'.format(previous_address, address), '']
+            elif address < previous_address:
+                if asm: asm = ';' + asm
+                #lines += ['; ERROR (0x{:x}, 0x{:x})'.format(address, previous_address)]
 	if asm:
             if lines and lines[-1]:
                 if is_label(asm) and not is_label(lines[-1]):
                     lines += ['']
             lines += [asm]
         previous_address = last_address
-    return '\n'.join(lines) + '\n'
+    return ('\n'.join(lines) + '\n').encode('utf-8')
 
 def print_scripts(scripts):
     chunks = []
