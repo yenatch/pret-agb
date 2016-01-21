@@ -1,5 +1,7 @@
 # coding: utf-8
 
+from map_names import map_names
+
 paths_to_search = ['asm/emerald.s']
 
 labels = {}
@@ -45,6 +47,15 @@ def read_map_groups():
 			name = text.split()[0].title().replace('_','')
 			maps[group][num] = name
 			variables['cur_map_num'] += 1
+
+        # Replace the extracted names with the ones in map_names.py.
+        i = 0
+        for group_num, group in maps.items():
+            for map_num, name in group.items():
+                new_name = map_names[i]
+                maps[group_num][map_num] = new_name
+                i += 1
+
 	return maps
 
 map_groups = read_map_groups()
