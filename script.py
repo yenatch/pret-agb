@@ -1,67 +1,21 @@
 # coding: utf-8
+
 """Classes for parsing Pokemon Emerald scripts.
 """
 
-paths_to_search = ['asm/emerald.s']
-
-labels = {}
-
-def find_labels(path):
-	lines = open(path).readlines()
-	for line in lines:
-		if '.include' in line:
-			incpath = line.split('"')[1]
-			find_labels(incpath)
-		elif ': ;' in line:
-			i = line.find(':')
-			label, address = line[:i], int(line[i+3:], 16)
-			labels[address] = label
-
-for path in paths_to_search:
-	find_labels(path)
-
-def load_rom(filename):
-    return bytearray(open(filename).read())
-
-baserom = load_rom('base_emerald.gba')
+from constants import *
 
 
-def read_map_groups():
-	path = 'constants/map_constants.s'
-	lines = open(path).readlines()
-	variables = {}
-	maps = {}
-	for line in lines:
-		line = line.strip()
-		if line.startswith('.set'):
-			name, value = line.split('.set')[1].split(',')
-			variables[name.strip()] = int(value, 0)
-		elif line.startswith('new_map_group'):
-			variables['cur_map_group'] += 1
-			variables['cur_map_num'] = 0
-			maps[variables['cur_map_group']] = {}
-		elif line.startswith('map_group'):
-			text = line.split('map_group')[1]
-			group, num = map(variables.get, ['cur_map_group','cur_map_num'])
-			name = text.split()[0].title().replace('_','')
-			maps[group][num] = name
-			variables['cur_map_num'] += 1
-	return maps
+def is_rom_address(address):
+    return (0x8000000 <= address <= 0x9ffffff)
 
-map_groups = read_map_groups()
+def is_label(asm):
+    if asm:
+        line = asm.split(';')[0].rstrip()
+        if line and line[-1] == ':':
+            return True
+    return False
 
-def read_constants(path):
-	lines = open(path).readlines()
-	variables = {}
-	for line in lines:
-		line = line.strip()
-		if line.startswith('.set'):
-			name, value = line.split('.set')[1].split(',')
-			variables[name.strip()] = int(value, 0)
-	return {v:k for k,v in variables.items()}
-
-pokemon_constants = read_constants('constants/species_constants.s')
-item_constants = read_constants('constants/item_constants.s')
 
 class Object(object):
     arg_names = []
@@ -124,9 +78,6 @@ class Int(Value):
     def asm(self):
         return '0x{:x}'.format(self.value)
 
-def is_rom_address(address):
-    return (0x8000000 <= address <= 0x9ffffff)
-
 class Pointer(Int):
     target = None
     target_arg_names = []
@@ -159,8 +110,8 @@ class Pointer(Int):
         return '0x{:x}'.format(self.value)
 
 class ThumbPointer(Pointer):
-	def get_label(self):
-		return Pointer.get_label(self) or labels.get(self.value - 1)
+    def get_label(self):
+        return Pointer.get_label(self) or labels.get(self.value - 1)
 
 class ParamGroup(Chunk):
     param_classes = []
@@ -198,19 +149,19 @@ class WordOrVariable(Word):
         return str(self.value)
 
 class Species(Word):
-	@property
-	def asm(self):
-		return pokemon_constants.get(self.value, str(self.value))
+    @property
+    def asm(self):
+        return pokemon_constants.get(self.value, str(self.value))
 class Item(Word):
-	@property
-	def asm(self):
-		return item_constants.get(self.value, str(self.value))
+    @property
+    def asm(self):
+        return item_constants.get(self.value, str(self.value))
 
 class Macro(ParamGroup):
     atomic = True
     @property
     def asm(self):
-	chunks = self.chunks
+        chunks = self.chunks
         return ', '.join(param.asm for param in chunks)
     def to_asm(self):
         return '\t' + self.name + ' ' + self.asm
@@ -239,9 +190,6 @@ class Label(Chunk):
         if self.address_comment:
             asm += ' ; 0x{:x}'.format(self.address)
         return asm
-    #@property
-    #def label(self):
-    #    return get_label(self.address)
 
 class Script(Chunk):
     commands = {}
@@ -270,37 +218,31 @@ class Script(Chunk):
 
 
 class MapId(Macro):
-	name = 'map'
-	param_classes = [
-		('group', Byte),
-		('number', Byte),
-	]
-	@property
-	def asm(self):
-		group = self.params['group'].value
-		number = self.params['number'].value
-		map_name = map_groups.get(group, {}).get(number)
-		if not map_name:
-			return Word(self.address).asm
-		return map_name
-	def to_asm(self):
-		return '\t' + 'map ' + self.asm
+    name = 'map'
+    param_classes = [
+        ('group', Byte),
+        ('number', Byte),
+    ]
+    @property
+    def asm(self):
+        group = self.params['group'].value
+        number = self.params['number'].value
+        map_name = map_groups.get(group, {}).get(number)
+        if not map_name:
+            return Word(self.address).asm
+        return map_name
+    def to_asm(self):
+        return '\t' + 'map ' + self.asm
 
 class WarpMapId(MapId):
-	"""Reversed MapId."""
-	param_classes = [
-		('number', Byte),
-		('group', Byte),
-	]
+    """Reversed MapId."""
+    param_classes = [
+        ('number', Byte),
+        ('group', Byte),
+    ]
 
 
 def print_chunks(chunks):
-    def is_label(asm):
-        if asm:
-            line = asm.split(';')[0].rstrip()
-            if line and line[-1] == ':':
-                return True
-        return False
     sorted_chunks = sorted(set((c.address, c.last_address, c.to_asm()) for c in chunks))
     lines = []
     previous_address = None
@@ -317,16 +259,10 @@ def print_chunks(chunks):
             elif address < previous_address:
                 if asm: asm = ';' + asm
                 #lines += ['; ERROR (0x{:x}, 0x{:x})'.format(address, previous_address)]
-	if asm:
+        if asm:
             if lines and lines[-1]:
                 if is_label(asm) and not is_label(lines[-1]):
                     lines += ['']
             lines += [asm]
         previous_address = last_address
     return ('\n'.join(lines) + '\n').encode('utf-8')
-
-def print_scripts(scripts):
-    chunks = []
-    for script in scripts:
-        chunks += script.chunks
-    return print_chunks(chunks)
