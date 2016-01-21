@@ -4,6 +4,13 @@ from event_script import *
 
 map_group_pointers_address = 0x486578
 
+def get_map_name(group, num):
+	group = map_groups.get(group)
+	if group:
+		label = group.get(num)
+		if label:
+			return label
+
 def dump_maps():
 	label = Label(map_group_pointers_address, asm='gMapGroups')
 	chunks = recursive_parse(MapGroups, map_group_pointers_address)
@@ -73,31 +80,91 @@ class MapGroups(List):
             chunk.chunks += [label]
             chunk.label = label
 
-class MapBorder(Chunk): pass
+class BinFile(Chunk):
+	name = '.incbin'
+	def parse(self):
+		Chunk.parse(self)
+		address = self.address
+		address += self.length
+		self.value = self.rom[self.address:address]
+		self.last_address = address
+	@property
+	def asm(self):
+		return '"' + self.filename + '"'
+	def to_asm(self):
+		return '\t' + self.name + ' ' + self.asm
+	def create_file(self):
+		with open(self.filename, 'wb') as out:
+			out.write(bytearray(self.value))
+
+class MapBorder(BinFile):
+	length = 4 * 2
 class MapBorderPointer(Pointer):
 	target = MapBorder
+	include_address = False
+	target_arg_names = ['filename']
 
-class MapBlockdata(Chunk): pass
+class MapBlockdata(BinFile):
+	@property
+	def length(self):
+		return self.width * self.height * 2
 class MapBlockdataPointer(Pointer):
 	target = MapBlockdata
+	include_address = False
+	target_arg_names = ['width', 'height', 'filename']
+
+class TilesetImage(Chunk): pass
+class TilesetImagePointer(Pointer):
+	target = TilesetImage
+class TilesetPalettes(Chunk): pass
+class TilesetPalettesPointer(Pointer):
+	target = TilesetPalettes
+class TilesetBlocks(Chunk): pass
+class TilesetBlocksPointer(Pointer):
+	target = TilesetBlocks
+class TilesetAnimations(Chunk): pass
+class TilesetAnimationsPointer(Pointer):
+	target = TilesetAnimations
+class TilesetBehavior(Chunk): pass
+class TilesetBehaviorPointer(ThumbPointer): pass
+#	target = TilesetBehavior
 
 class Tileset(ParamGroup):
 	param_classes = [
 		Byte, Byte, Byte, Byte,
-		Pointer, Pointer, Pointer, Pointer, Pointer,
+		TilesetImagePointer, TilesetPalettesPointer, TilesetBlocksPointer, TilesetAnimationsPointer, TilesetBehaviorPointer,
 	]
 class TilesetPointer(Pointer):
 	target = Tileset
+	include_address = False
+
+class Tileset2(Tileset): pass
+class Tileset2Pointer(TilesetPointer):
+	target = Tileset2
 
 class MapAttributes(ParamGroup):
 	param_classes = [
-		Int, Int,
-		MapBorderPointer, MapBlockdataPointer, TilesetPointer, TilesetPointer,
+		('width', Int), ('height', Int),
+		('border_p', MapBorderPointer),
+		('blockdata_p', MapBlockdataPointer),
+		TilesetPointer,
+		Tileset2Pointer,
 		#Byte, Byte, # FRLG
 	]
+	def parse(self):
+		ParamGroup.parse(self)
+		map_name = get_map_name(self.group, self.num)
+		blockdata_p = self.params['blockdata_p']
+		blockdata_p.width = self.params['width'].value
+		blockdata_p.height = self.params['height'].value
+		blockdata_p.filename = 'maps/{}.blk'.format(map_name)
+		border_p = self.params['border_p']
+		border_p.filename = 'maps/{}_border.blk'.format(map_name)
 
 class MapAttributesPointer(Pointer):
 	target = MapAttributes
+	include_address = False
+	target_arg_names = ['group', 'num']
 
 class MapObject(Macro):
 	name = 'object_event'
@@ -114,6 +181,7 @@ class MapObjects(List):
 class MapObjectsPointer(Pointer):
 	target = MapObjects
 	target_arg_names = ['count']
+	include_address = False
 
 class MapWarp(Macro):
 	name = 'warp_def'
@@ -129,6 +197,7 @@ class MapWarps(List):
 class MapWarpsPointer(Pointer):
 	target = MapWarps
 	target_arg_names = ['count']
+	include_address = False
 
 class MapCoordEvent(Macro):
 	name = 'coord_event'
@@ -145,6 +214,7 @@ class MapCoordEvents(List):
 class MapCoordEventsPointer(Pointer):
 	target = MapCoordEvents
 	target_arg_names = ['count']
+	include_address = False
 
 class HiddenItem(ParamGroup):
 	param_classes = [ Item, Byte, Byte, ]
@@ -172,6 +242,7 @@ class MapBGEvents(List):
 class MapBGEventsPointer(Pointer):
 	target = MapBGEvents
 	target_arg_names = ['count']
+	include_address = False
 
 class MapEvents(ParamGroup):
 	param_classes = [
@@ -185,6 +256,7 @@ class MapEvents(ParamGroup):
 
 class MapEventsPointer(Pointer):
 	target = MapEvents
+	include_address = False
 
 class MapScript1(ParamGroup):
 	param_classes = [EventScript]
@@ -221,6 +293,7 @@ class MapScripts(ParamGroup):
 
 class MapScriptsPointer(Pointer):
 	target = MapScripts
+	include_address = False
 
 class ConnectionDirection(Int):
 	"""Does not stand on its own. Should be used only with MapConnection."""
@@ -258,6 +331,7 @@ class MapConnectionsList(List):
 class MapConnectionsListPointer(Pointer):
 	target = MapConnectionsList
 	target_arg_names = ['count']
+	include_address = False
 
 class MapConnections(ParamGroup):
 	param_classes = [
@@ -270,21 +344,29 @@ class MapConnections(ParamGroup):
 	
 class MapConnectionsPointer(Pointer):
 	target = MapConnections
+	include_address = False
 
 class Map(ParamGroup):
 	param_classes = [
-		MapAttributesPointer, MapEventsPointer, MapScriptsPointer, MapConnectionsPointer,
+		('attributes_p', MapAttributesPointer),
+		MapEventsPointer,
+		MapScriptsPointer,
+		MapConnectionsPointer,
 		Word, Word, Byte, Byte, Byte, Byte,
 		Word, Byte, Byte,
 	]
 
+	def parse(self):
+		ParamGroup.parse(self)
+		attributes_p = self.params['attributes_p']
+		attributes_p.group = self.group
+		attributes_p.num = self.num
+
 	@property
 	def context_label(self):
-		group = map_groups.get(self.group)
-		if group:
-			label = group.get(self.num)
-			if label:
-				return 'g' + label
+		map_name = get_map_name(self.group, self.num)
+		if map_name:
+			return 'g' + map_name
 		return 'g'
 
 class MapPointer(Pointer):
@@ -293,11 +375,9 @@ class MapPointer(Pointer):
 
 	@property
 	def context_label(self):
-		group = map_groups.get(self.group)
-		if group:
-			label = group.get(self.num)
-			if label:
-				return 'g' + label
+		map_name = get_map_name(self.group, self.num)
+		if map_name:
+			return 'g' + map_name
 		return 'g'
 
 
@@ -360,7 +440,6 @@ movement_command_classes = make_movement_command_classes()
 class Movement(Script):
 	commands = movement_command_classes
 MovementPointer.target = Movement
-
 
 if __name__ == '__main__':
     print print_nested_chunks(dump_maps())

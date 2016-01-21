@@ -2,16 +2,32 @@
 """Classes for parsing Pokemon Emerald scripts.
 """
 
+paths_to_search = ['asm/emerald.s']
+
+labels = {}
+
+def find_labels(path):
+	lines = open(path).readlines()
+	for line in lines:
+		if '.include' in line:
+			incpath = line.split('"')[1]
+			find_labels(incpath)
+		elif ': ;' in line:
+			i = line.find(':')
+			label, address = line[:i], int(line[i+3:], 16)
+			labels[address] = label
+
+for path in paths_to_search:
+	find_labels(path)
 
 def load_rom(filename):
     return bytearray(open(filename).read())
 
 baserom = load_rom('base_emerald.gba')
 
-constants_path = 'constants/map_constants.s'
 
 def read_map_groups():
-	path = constants_path
+	path = 'constants/map_constants.s'
 	lines = open(path).readlines()
 	variables = {}
 	maps = {}
@@ -19,7 +35,7 @@ def read_map_groups():
 		line = line.strip()
 		if line.startswith('.set'):
 			name, value = line.split('.set')[1].split(',')
-			variables[name.strip()] = int(value)
+			variables[name.strip()] = int(value, 0)
 		elif line.startswith('new_map_group'):
 			variables['cur_map_group'] += 1
 			variables['cur_map_num'] = 0
@@ -33,6 +49,19 @@ def read_map_groups():
 	return maps
 
 map_groups = read_map_groups()
+
+def read_constants(path):
+	lines = open(path).readlines()
+	variables = {}
+	for line in lines:
+		line = line.strip()
+		if line.startswith('.set'):
+			name, value = line.split('.set')[1].split(',')
+			variables[name.strip()] = int(value, 0)
+	return {v:k for k,v in variables.items()}
+
+pokemon_constants = read_constants('constants/species_constants.s')
+item_constants = read_constants('constants/item_constants.s')
 
 class Object(object):
     arg_names = []
@@ -95,20 +124,16 @@ class Int(Value):
     def asm(self):
         return '0x{:x}'.format(self.value)
 
+def is_rom_address(address):
+    return (0x8000000 <= address <= 0x9ffffff)
+
 class Pointer(Int):
     target = None
     target_arg_names = []
-
-    #def parse(self):
-    #    Int.parse(self)
-    #    if not is_address_parsed(self.target, self.real_address):
-    #        mark_address(self.target, self.real_address)
-    #        chunk = self.resolve()
-    #        if chunk is not None:
-    #            self.chunks += [chunk]
+    include_address = True # passed to Label
 
     def resolve(self):
-        if not (0x8000000 <= self.value <= 0x9ffffff):
+        if not is_rom_address(self.value):
             return None
         if self.target is None:
             return None
@@ -119,10 +144,10 @@ class Pointer(Int):
     def get_label(self):
         if hasattr(self, 'label'):
             return self.label.asm
-        return None
+        return labels.get(self.value)
     @property
     def real_address(self):
-        if not (0x8000000 <= self.value <= 0x9ffffff) and not self.value == 0:
+        if not is_rom_address(self.value) and not self.value == 0:
             #raise Exception('invalid pointer at 0x{:08x} (0x{:08x})'.format(self.address, self.value))
             return None
         return self.value & 0x1ffffff
@@ -132,6 +157,10 @@ class Pointer(Int):
         if label:
             return label
         return '0x{:x}'.format(self.value)
+
+class ThumbPointer(Pointer):
+	def get_label(self):
+		return Pointer.get_label(self) or labels.get(self.value - 1)
 
 class ParamGroup(Chunk):
     param_classes = []
@@ -156,8 +185,26 @@ class ParamGroup(Chunk):
     def asm(self):
         return ', '.join(param.asm for param in self.chunks)
 
+class Variable(Word):
+    @property
+    def asm(self):
+        return '0x{:x}'.format(self.value)
+
+class WordOrVariable(Word):
+    @property
+    def asm(self):
+        if self.value >= 0x4000:
+            return '0x{:x}'.format(self.value)
+        return str(self.value)
+
+class Species(Word):
+	@property
+	def asm(self):
+		return pokemon_constants.get(self.value, str(self.value))
 class Item(Word):
-	pass
+	@property
+	def asm(self):
+		return item_constants.get(self.value, str(self.value))
 
 class Macro(ParamGroup):
     atomic = True
@@ -175,13 +222,20 @@ class Label(Chunk):
     atomic = True
     context_label = 'g'
     default_label_base = 'Unknown'
+    include_address = True
+    address_comment = True
     def parse(self):
         Chunk.parse(self)
         if not hasattr(self, 'asm'):
-            label = self.context_label + self.default_label_base + '_0x{:x}'.format(self.address)
+            label = self.context_label + self.default_label_base
+            if self.include_address:
+                label += '_0x{:x}'.format(self.address)
             self.asm = label
     def to_asm(self):
-        return self.asm + ':'
+        asm = self.asm + ':'
+        if self.address_comment:
+            asm += ' ; 0x{:x}'.format(self.address)
+        return asm
     #@property
     #def label(self):
     #    return get_label(self.address)
@@ -239,7 +293,11 @@ class WarpMapId(MapId):
 
 def print_chunks(chunks):
     def is_label(asm):
-        return asm and asm[-1] == ':'
+        if asm:
+            line = asm.split(';')[0].rstrip()
+            if line and line[-1] == ':':
+                return True
+        return False
     sorted_chunks = sorted(set((c.address, c.last_address, c.to_asm()) for c in chunks))
     lines = []
     previous_address = None

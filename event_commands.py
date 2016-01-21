@@ -22,18 +22,6 @@ class BraillePointer(Pointer):
 class MovementPointer(Pointer):
     pass
 
-class Variable(Word):
-    @property
-    def asm(self):
-        return '0x{:x}'.format(self.value)
-
-class WordOrVariable(Word):
-    @property
-    def asm(self):
-        if self.value >= 0x4000:
-            return '0x{:x}'.format(self.value)
-        return str(self.value)
-
 event_commands = {
     0x00: { 'name': 'snop',
         'param_names': [],
@@ -482,13 +470,13 @@ event_commands = {
     },
     0x49: { 'name': 'addpcitem',
         'param_names': ['index', 'quantity'],
-        'param_types': [WordOrVariable, WordOrVariable],
+        'param_types': [Item, WordOrVariable],
         'aliases': ['addpcitem'],
         'description': "Adds a quantity amount of item index to the player's PC. Both arguments can be variables.",
     },
     0x4a: { 'name': 'checkpcitem',
         'param_names': ['index', 'quantity'],
-        'param_types': [WordOrVariable, WordOrVariable],
+        'param_types': [Item, WordOrVariable],
         'aliases': ['checkpcitem'],
         'description': "Checks for quantity amount of item index in the player's PC. Both arguments can be variables.",
     },
@@ -734,7 +722,7 @@ event_commands = {
     },
     0x75: { 'name': 'showpokepic',
         'param_names': ['species', 'X', 'Y'],
-        'param_types': ['word', 'byte', 'byte'],
+        'param_types': [Species, 'byte', 'byte'],
         'aliases': ['showpokepic'],
         'description': 'Displays a box containing the front sprite for the specified (species) Pokmon species.',
     },
@@ -758,7 +746,7 @@ event_commands = {
     },
     0x79: { 'name': 'givepokemon',
         'param_names': ['species', 'level', 'item', 'unknown1', 'unknown2', 'unknown3'],
-        'param_types': ['word', 'byte', Item, 'long', 'long', 'byte'],
+        'param_types': [Species, 'byte', Item, 'long', 'long', 'byte'],
         'aliases': ['givePokmon', 'givepokemon'],
         'description': 'Gives the player one of the specified (species) Pokmon at level level holding item. The unknown arguments should all be zeroes.',
     },
@@ -780,7 +768,7 @@ event_commands = {
     },
     0x7d: { 'name': 'bufferpoke',
         'param_names': ['out', 'species'],
-        'param_types': ['byte', 'word'],
+        'param_types': ['byte', Species],
         'aliases': ['bufferpokemon', 'storepokemon', 'bufferPokmon', 'bufferpoke'],
         'description': 'Writes the name of the Pokmon at index species to the specified buffer.',
     },
@@ -991,7 +979,7 @@ event_commands = {
     },
     0xa1: { 'name': 'pokecry',
         'param_names': ['species', 'effect'],
-        'param_types': ['word', 'word'],
+        'param_types': [Species, 'word'],
         'aliases': ['cry', 'pokecry'],
         'description': "Plays the specified (species) Pokmon's cry. You can use waitcry to block script execution until the sound finishes.",
     },
@@ -1109,7 +1097,7 @@ event_commands = {
     },
     0xb6: { 'name': 'setwildbattle',
         'param_names': ['species', 'level', 'item'],
-        'param_types': ['word', 'byte', Item],
+        'param_types': [Species, 'byte', Item],
         'aliases': ['setwildbattle'],
         'description': 'Prepares to start a wild battle against a species at Level level holding item. Running this command will not affect normal wild battles. You start the prepared battle with dowildbattle.',
     },

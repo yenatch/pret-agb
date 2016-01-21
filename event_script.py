@@ -155,7 +155,8 @@ def recursive_parse(*args):
                         label = Label(
                             chunk.real_address,
                             default_label_base=chunk.target.__name__,
-                            context_label=closure['context_labels'][-1]
+                            context_label=closure['context_labels'][-1],
+                            include_address=chunk.include_address,
                         )
                         chunk.label = label
                 recurse(chunk.target, chunk.real_address, **chunk.target_args)
