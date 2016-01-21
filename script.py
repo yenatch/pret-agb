@@ -191,6 +191,12 @@ class Label(Chunk):
             asm += ' ; 0x{:x}'.format(self.address)
         return asm
 
+class Comment(Chunk):
+    def to_asm(self):
+        if hasattr(self, 'comment') and self.comment:
+            return '; ' + self.comment
+        return ''
+
 class Script(Chunk):
     commands = {}
     default_label = Label

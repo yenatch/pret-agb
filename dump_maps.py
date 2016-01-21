@@ -81,6 +81,7 @@ class MapGroups(List):
             chunk.label = label
 
 class BinFile(Chunk):
+	atomic = True
 	name = '.incbin'
 	def parse(self):
 		Chunk.parse(self)

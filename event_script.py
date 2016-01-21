@@ -15,8 +15,9 @@ force_stop_addresses = [
 	0x2c8381, # TrainerHill1F missing end
 ]
 
+
 class String(Chunk):
-    name = '.text'
+    name = 'text'
     atomic = True
     def parse(self):
         Chunk.parse(self)
@@ -37,10 +38,16 @@ class String(Chunk):
             asm = asm.replace(newline_token, newline_token + newline)
         return newline[2:] + asm + '"'
 
+class Text(ParamGroup):
+    param_classes = [String]
+
+TextPointer.target = Text
+
+
 alphabet = map(chr, xrange(ord('A'), ord('Z')+1))
 
 class BrailleString(String):
-    name = '.braille'
+    name = 'braille'
     letters = [ 1, 5, 3, 11, 9, 7, 15, 13, 6, 14, 17, 21, 19, 27, 25, 23, 31, 29, 22, 30, 49, 53, 46, 51, 59, 57 ]
     mapping = dict(zip(letters, alphabet))
     mapping.update({ 0: ' ', 28: '!', 16: '\'', 4: ',', 48: '-', 44: '.', 52: '?', 8: '"', 0xfe: '\n', 0xff: '$' })
@@ -53,27 +60,16 @@ class Braille(ParamGroup):
 
 BraillePointer.target = Braille
 
-class Text(ParamGroup):
-    param_classes = [String]
-
-TextPointer.target = Text
-
-class EventScriptLabel(Label):
-    default_label_base = 'Event'
-
-class Comment(Chunk):
-    def to_asm(self):
-        if hasattr(self, 'comment') and self.comment:
-            return '; ' + self.comment
-        return ''
 
 class EventScript(Script):
     commands = event_command_classes
+
     def parse(self):
         Script.parse(self)
         self.check_forced_stops()
         self.filter_msgbox()
         #self.check_extra_ends()
+
     def check_forced_stops(self):
         """
         There are some malformed scripts that need to be manually ended.
@@ -85,6 +81,7 @@ class EventScript(Script):
                 self.last_address = chunk.last_address
                 self.chunks += [Comment(self.last_address, comment='forced stop')]
                 break
+
     def check_extra_ends(self):
         address = self.last_address
         byte = Byte(address)
@@ -95,6 +92,7 @@ class EventScript(Script):
                 self.chunks += [command]
                 address += command.length
         self.last_address = address
+
     def filter_msgbox(self):
         loadptrs = []
         for command in self.chunks:
@@ -113,6 +111,7 @@ class EventScript(Script):
 
 EventScriptPointer.target = EventScript
 
+
 def recursive_event_script(address):
     return recursive_parse(EventScript, address)
 
@@ -120,7 +119,7 @@ def recursive_parse(*args):
     chunks = {}
     closure = {
         'level': -1,
-         'context_labels': ['g'],
+        'context_labels': ['g'],
     }
     def recurse(class_, address, *args_, **kwargs_):
         if chunks.get(address):
@@ -130,38 +129,31 @@ def recursive_parse(*args):
         if address in (None, 0):
             return
         closure['level'] += 1
-        #print ' ' * closure['level'], class_, hex(address)
-        #sys.stdout.flush()
-
-        # container chunk for chunk + label
-        # XXX not the case anymore, is this still required?
-        container = Chunk()
         chunk = class_(address, *args_, **kwargs_)
-        container.chunks += [chunk]
-
+        chunks[address] = chunk
         context = hasattr(chunk, 'context_label')
         if context:
             closure['context_labels'] += [chunk.context_label]
-        chunks[address] = container
-        recurse_pointers(container)
+        recurse_pointers(chunk)
         if context:
             closure['context_labels'].pop()
         closure['level'] -= 1
+
     def recurse_pointers(chunk):
-        if hasattr(chunk, 'target'):
-            if chunk.target: # redundant, but avoids errors
-		if chunk.real_address:
-                    if not (hasattr(chunk, 'label') and chunk.label):
-                        label = Label(
-                            chunk.real_address,
-                            default_label_base=chunk.target.__name__,
-                            context_label=closure['context_labels'][-1],
-                            include_address=chunk.include_address,
-                        )
-                        chunk.label = label
-                recurse(chunk.target, chunk.real_address, **chunk.target_args)
+        if hasattr(chunk, 'target') and chunk.target:
+            if chunk.real_address:
+                if not hasattr(chunk, 'label') or not chunk.label:
+                    label = Label(
+                        chunk.real_address,
+                        default_label_base=chunk.target.__name__,
+                        context_label=closure['context_labels'][-1],
+                        include_address=chunk.include_address,
+                    )
+                    chunk.label = label
+            recurse(chunk.target, chunk.real_address, **chunk.target_args)
         for c in chunk.chunks:
             recurse_pointers(c)
+
     recurse(*args)
     return chunks
 
