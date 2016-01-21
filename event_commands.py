@@ -6,17 +6,12 @@
 from new import classobj
 
 from script import *
+from text import *
 
 class EventScriptPointer(Pointer):
     pass
 
 class PokemartPointer(Pointer):
-    pass
-
-class TextPointer(Pointer):
-    pass
-
-class BraillePointer(Pointer):
     pass
 
 class MovementPointer(Pointer):

@@ -152,6 +152,7 @@ class Species(Word):
     @property
     def asm(self):
         return pokemon_constants.get(self.value, str(self.value))
+
 class Item(Word):
     @property
     def asm(self):
@@ -164,13 +165,15 @@ class Macro(ParamGroup):
         chunks = self.chunks
         return ', '.join(param.asm for param in chunks)
     def to_asm(self):
-        return '\t' + self.name + ' ' + self.asm
+        asm = self.asm
+        return '\t' + self.name + (' ' if asm else '') + asm
 
 class Command(Macro):
     end = False
-    def to_asm(self):
+    @property
+    def asm(self):
         chunks = self.chunks[1:]
-        return '\t' + self.name + ' ' + ', '.join(param.asm for param in chunks)
+        return ', '.join(param.asm for param in chunks)
 
 class Label(Chunk):
     atomic = True
@@ -248,6 +251,50 @@ class WarpMapId(MapId):
     ]
 
 
+
+def recursive_parse(*args):
+    chunks = {}
+    closure = {
+        'level': -1,
+        'context_labels': ['g'],
+    }
+    def recurse(class_, address, *args_, **kwargs_):
+        if chunks.get(address):
+            return
+        if class_ is None:
+            return
+        if address in (None, 0):
+            return
+        closure['level'] += 1
+        chunk = class_(address, *args_, **kwargs_)
+        chunks[address] = chunk
+        context = hasattr(chunk, 'context_label')
+        if context:
+            closure['context_labels'] += [chunk.context_label]
+        recurse_pointers(chunk)
+        if context:
+            closure['context_labels'].pop()
+        closure['level'] -= 1
+
+    def recurse_pointers(chunk):
+        if hasattr(chunk, 'target') and chunk.target:
+            if chunk.real_address:
+                if not hasattr(chunk, 'label') or not chunk.label:
+                    label = Label(
+                        chunk.real_address,
+                        default_label_base=chunk.target.__name__,
+                        context_label=closure['context_labels'][-1],
+                        include_address=chunk.include_address,
+                    )
+                    chunk.label = label
+            recurse(chunk.target, chunk.real_address, **chunk.target_args)
+        for c in chunk.chunks:
+            recurse_pointers(c)
+
+    recurse(*args)
+    return chunks
+
+
 def print_chunks(chunks):
     sorted_chunks = sorted(set((c.address, c.last_address, c.to_asm()) for c in chunks))
     lines = []
@@ -255,13 +302,9 @@ def print_chunks(chunks):
     for address, last_address, asm in sorted_chunks:
         if previous_address:
             if address > previous_address:
-                # awful hack to catch unnecessary ends
-                if address - previous_address == 1 and baserom[previous_address] == 0x2:
-                    lines += ['\tend']
-                else:
-                    if lines and not is_label(lines[-1]):
-                        lines += ['']
-                    lines += ['\tbaserom 0x{:x}, 0x{:x}'.format(previous_address, address), '']
+                if lines and not is_label(lines[-1]):
+                    lines += ['']
+                lines += ['\tbaserom 0x{:x}, 0x{:x}'.format(previous_address, address), '']
             elif address < previous_address:
                 if asm: asm = ';' + asm
                 #lines += ['; ERROR (0x{:x}, 0x{:x})'.format(address, previous_address)]
@@ -272,3 +315,26 @@ def print_chunks(chunks):
             lines += [asm]
         previous_address = last_address
     return ('\n'.join(lines) + '\n').encode('utf-8')
+
+def flatten_nested_chunks(*args):
+    closure = {'flattened': []}
+    def recurse(chunks, labels_only=False):
+        for chunk in chunks:
+            if hasattr(chunk, 'label') and chunk.label:
+                closure['flattened'] += [chunk.label]
+            if not labels_only:
+                if chunk.chunks and not chunk.atomic:
+                    recurse(chunk.chunks)
+                else:
+                    closure['flattened'] += [chunk]
+                    recurse(chunk.chunks, labels_only=True)
+            else:
+                recurse(chunk.chunks, labels_only=True)
+    recurse(*args)
+    return closure['flattened']
+
+def print_nested_chunks(*args):
+    return print_chunks(flatten_nested_chunks(*args))
+
+def print_recursive(class_, address):
+    return print_nested_chunks(recursive_parse(class_, address).values())
