@@ -204,7 +204,7 @@ class MapCoordEvent(Macro):
 	param_classes = [
 		Word, Word,
 		Byte, Byte,
-		Word, Word, Word,
+		WordOrVariable, Word, Word,
 		EventScriptPointer,
 	]
 
@@ -244,7 +244,8 @@ class MapBGEventsPointer(Pointer):
 	target_arg_names = ['count']
 	include_address = False
 
-class MapEvents(ParamGroup):
+class MapEvents(Macro):
+	name = 'map_events'
 	param_classes = [
 		Byte, Byte, Byte, Byte,
 		MapObjectsPointer, MapWarpsPointer, MapCoordEventsPointer, MapBGEventsPointer,
@@ -253,6 +254,9 @@ class MapEvents(ParamGroup):
 		ParamGroup.parse(self)
 		for byte, pointer in zip(self.chunks[:4], self.chunks[4:]):
 			pointer.count = byte.value
+	@property
+	def asm(self):
+		return ', '.join(chunk.asm for chunk in self.chunks[4:])
 
 class MapEventsPointer(Pointer):
 	target = MapEvents

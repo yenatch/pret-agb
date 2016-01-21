@@ -208,9 +208,12 @@ class Item(Word):
 
 class Macro(ParamGroup):
     atomic = True
-    def to_asm(self):
+    @property
+    def asm(self):
 	chunks = self.chunks
-        return '\t' + self.name + ' ' + ', '.join(param.asm for param in chunks)
+        return ', '.join(param.asm for param in chunks)
+    def to_asm(self):
+        return '\t' + self.name + ' ' + self.asm
 
 class Command(Macro):
     end = False
