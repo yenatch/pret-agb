@@ -3,45 +3,14 @@ from new import classobj
 from event_script import *
 
 
-map_group_pointers_address = 0x486578
+emerald_map_groups_address = 0x486578
 
-def dump_maps():
-	label = Label(map_group_pointers_address, asm='gMapGroups')
-	chunks = recursive_parse(MapGroups, map_group_pointers_address)
-	chunks[map_group_pointers_address].label = label
+def dump_maps(address=emerald_map_groups_address):
+	label = Label(address, asm='gMapGroups')
+	chunks = recursive_parse(MapGroups, address)
+	chunks[address].label = label
 	return chunks.values()
 
-
-class MapGroup(List):
-    def parse(self):
-        self.param_classes = [MapPointer]
-        self.count = len(map_groups[self.group])
-        List.parse(self)
-        for i, chunk in enumerate(self.chunks):
-            chunk.group = self.group
-            chunk.num = i
-            label_name = 'g' + map_groups[self.group][i]
-            label = Label(chunk.real_address)
-            label.asm = label_name
-            chunk.chunks += [label]
-            chunk.label = label
-
-class MapGroupPointer(Pointer):
-    target = MapGroup
-    target_arg_names = ['group']
-
-class MapGroups(List):
-    param_classes = [MapGroupPointer]
-    def parse(self):
-        self.count = len(map_groups)
-        List.parse(self)
-        for i, chunk in enumerate(self.chunks):
-            chunk.group = i
-            label_name = 'gMapGroup{}'.format(i)
-            label = Label(chunk.real_address)
-            label.asm = label_name
-            chunk.chunks += [label]
-            chunk.label = label
 
 class BinFile(Chunk):
 	atomic = True
@@ -339,6 +308,37 @@ class MapPointer(Pointer):
 		if map_name:
 			return 'g' + map_name
 		return 'g'
+
+class MapGroup(List):
+    def parse(self):
+        self.param_classes = [MapPointer]
+        self.count = len(map_groups[self.group])
+        List.parse(self)
+        for i, chunk in enumerate(self.chunks):
+            chunk.group = self.group
+            chunk.num = i
+            label_name = 'g' + map_groups[self.group][i]
+            label = Label(chunk.real_address)
+            label.asm = label_name
+            chunk.chunks += [label]
+            chunk.label = label
+
+class MapGroupPointer(Pointer):
+    target = MapGroup
+    target_arg_names = ['group']
+
+class MapGroups(List):
+    param_classes = [MapGroupPointer]
+    def parse(self):
+        self.count = len(map_groups)
+        List.parse(self)
+        for i, chunk in enumerate(self.chunks):
+            chunk.group = i
+            label_name = 'gMapGroup{}'.format(i)
+            label = Label(chunk.real_address)
+            label.asm = label_name
+            chunk.chunks += [label]
+            chunk.label = label
 
 
 if __name__ == '__main__':
