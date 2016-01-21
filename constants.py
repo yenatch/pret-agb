@@ -49,6 +49,13 @@ def read_map_groups():
 
 map_groups = read_map_groups()
 
+def get_map_name(group, num):
+	group = map_groups.get(group)
+	if group:
+		label = group.get(num)
+		if label:
+			return label
+
 def read_constants(path):
 	lines = open(path).readlines()
 	variables = {}

@@ -2,14 +2,8 @@ from new import classobj
 
 from event_script import *
 
-map_group_pointers_address = 0x486578
 
-def get_map_name(group, num):
-	group = map_groups.get(group)
-	if group:
-		label = group.get(num)
-		if label:
-			return label
+map_group_pointers_address = 0x486578
 
 def dump_maps():
 	label = Label(map_group_pointers_address, asm='gMapGroups')
@@ -17,37 +11,6 @@ def dump_maps():
 	chunks[map_group_pointers_address].label = label
 	return chunks.values()
 
-class List(Chunk):
-	param_classes = []
-	def parse(self):
-		Chunk.parse(self)
-		self.chunks = []
-		address = self.address
-		count = getattr(self, 'count', 0)
-		for i in xrange(count):
-			for item in self.param_classes:
-				name = None
-				try:
-					name, param_class = item
-				except:
-					param_class = item
-				param = param_class(address)
-				self.chunks += [param]
-				address += param.length
-		self.last_address = address
-
-class ItemList(List):
-	param_classes = [Item]
-	def parse(self):
-		self.count = 1
-		List.parse(self)
-		while self.chunks[-1].value != 0:
-			self.count += 1
-			List.parse(self)
-class Pokemart(ParamGroup):
-	param_classes = [ItemList, EventScript]
-
-PokemartPointer.target = Pokemart
 
 class MapGroup(List):
     def parse(self):
@@ -311,14 +274,6 @@ class ConnectionDirection(Int):
 	def asm(self):
 		return self.directions[self.value]
 
-class SignedInt(Int):
-	def parse(self):
-		Int.parse(self)
-		self.value -= (self.value & 0x80000000) * 2
-	@property
-	def asm(self):
-		return str(self.value)
-
 class MapConnection(Macro):
 	name = 'connection'
 	param_classes = [
@@ -346,7 +301,7 @@ class MapConnections(ParamGroup):
 	def parse(self):
 		ParamGroup.parse(self)
 		self.params['pointer'].count = self.params['count'].value
-	
+
 class MapConnectionsPointer(Pointer):
 	target = MapConnections
 	include_address = False
@@ -385,66 +340,6 @@ class MapPointer(Pointer):
 			return 'g' + map_name
 		return 'g'
 
-
-movements = [
-	'step_00',
-	'step_01',
-	'step_02',
-	'step_03',
-	'slow_step_down',
-	'slow_step_up',
-	'slow_step_left',
-	'slow_step_right',
-	'step_down',
-	'step_up',
-	'step_left',
-	'step_right',
-	'fast_step_down',
-	'fast_step_up',
-	'fast_step_left',
-	'fast_step_right',
-	'step_10',
-	'step_11',
-	'step_12',
-	'step_13',
-]
-movement_commands = {
-	0x91: { 'name': 'step_91',
-	},
-	0x92: { 'name': 'step_92',
-	},
-	0x96: { 'name': 'step_96',
-	},
-	0xfe: { 'name': 'step_end',
-		'end': True,
-	},
-}
-num_movement_commands = 0x64
-
-def make_movement_command_classes():
-	classes = {}
-	for byte, name in enumerate(movements):
-		movement_commands[byte] = {
-			'name': name,
-		}
-	for byte in xrange(byte, num_movement_commands):
-		movement_commands[byte] = {
-			'name': 'step_{:02x}'.format(byte)
-		}
-	for byte, command in movement_commands.items():
-		class_name = 'Movement_' + command['name']
-		attributes = {}
-		attributes['id'] = byte
-		attributes['param_classes'] = [Byte] + command.get('param_types', list())
-		attributes.update(command)
-		classes[byte] = classobj(class_name, (Command,), attributes)
-	return classes
-
-movement_command_classes = make_movement_command_classes()
-
-class Movement(Script):
-	commands = movement_command_classes
-MovementPointer.target = Movement
 
 if __name__ == '__main__':
     print print_nested_chunks(dump_maps())

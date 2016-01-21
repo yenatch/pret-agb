@@ -78,6 +78,14 @@ class Int(Value):
     def asm(self):
         return '0x{:x}'.format(self.value)
 
+class SignedInt(Int):
+	def parse(self):
+		Int.parse(self)
+		self.value -= (self.value & 0x80000000) * 2
+	@property
+	def asm(self):
+		return str(self.value)
+
 class Pointer(Int):
     target = None
     target_arg_names = []
@@ -226,6 +234,35 @@ class Script(Chunk):
         return print_chunks(self.chunks)
 
 
+class List(Chunk):
+	param_classes = []
+	def parse(self):
+		Chunk.parse(self)
+		self.chunks = []
+		address = self.address
+		count = getattr(self, 'count', 0)
+		for i in xrange(count):
+			for item in self.param_classes:
+				name = None
+				try:
+					name, param_class = item
+				except:
+					param_class = item
+				param = param_class(address)
+				self.chunks += [param]
+				address += param.length
+		self.last_address = address
+
+class ItemList(List):
+	param_classes = [Item]
+	def parse(self):
+		self.count = 1
+		List.parse(self)
+		while self.chunks[-1].value != 0:
+			self.count += 1
+			List.parse(self)
+
+
 class MapId(Macro):
     name = 'map'
     param_classes = [
@@ -249,7 +286,6 @@ class WarpMapId(MapId):
         ('number', Byte),
         ('group', Byte),
     ]
-
 
 
 def recursive_parse(*args):
