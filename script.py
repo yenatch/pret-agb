@@ -314,7 +314,7 @@ def recursive_parse(*args):
 
     def recurse_pointers(chunk):
         if hasattr(chunk, 'target') and chunk.target:
-            if chunk.real_address and not labels.get(chunk.value):
+            if chunk.real_address:
                 if not hasattr(chunk, 'label') or not chunk.label:
                     label = Label(
                         chunk.real_address,
@@ -322,6 +322,8 @@ def recursive_parse(*args):
                         context_label=closure['context_labels'][-1],
                         include_address=chunk.include_address,
                     )
+                    asm = labels.get(chunk.value)
+                    if asm and 'Unknown' not in asm: label.asm = asm
                     chunk.label = label
                 recurse(chunk.target, chunk.real_address, **chunk.target_args)
         for c in chunk.chunks:
