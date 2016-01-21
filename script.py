@@ -192,7 +192,7 @@ class Label(Chunk):
     def parse(self):
         Chunk.parse(self)
         if not hasattr(self, 'asm'):
-            label = self.context_label + self.default_label_base
+            label = self.context_label + '_' + self.default_label_base
             if self.include_address:
                 label += '_{:X}'.format(self.address)
             self.asm = label
