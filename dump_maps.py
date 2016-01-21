@@ -90,9 +90,9 @@ class MapAttributes(ParamGroup):
 		blockdata_p = self.params['blockdata_p']
 		blockdata_p.width = self.params['width'].value
 		blockdata_p.height = self.params['height'].value
-		blockdata_p.filename = 'maps/{}.blk'.format(map_name)
+		blockdata_p.filename = 'maps/{}/map.bin'.format(map_name)
 		border_p = self.params['border_p']
-		border_p.filename = 'maps/{}_border.blk'.format(map_name)
+		border_p.filename = 'maps/{}/border.bin'.format(map_name)
 
 class MapAttributesPointer(Pointer):
 	target = MapAttributes

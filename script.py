@@ -194,12 +194,12 @@ class Label(Chunk):
         if not hasattr(self, 'asm'):
             label = self.context_label + self.default_label_base
             if self.include_address:
-                label += '_0x{:x}'.format(self.address)
+                label += '_{:X}'.format(self.address)
             self.asm = label
     def to_asm(self):
         asm = self.asm + ':'
         if self.address_comment:
-            asm += ' ; 0x{:x}'.format(self.address)
+            asm += ' ; {:X}'.format(0x8000000 + self.address)
         return asm
 
 class Comment(Chunk):
@@ -314,7 +314,7 @@ def recursive_parse(*args):
 
     def recurse_pointers(chunk):
         if hasattr(chunk, 'target') and chunk.target:
-            if chunk.real_address:
+            if chunk.real_address and not labels.get(chunk.value):
                 if not hasattr(chunk, 'label') or not chunk.label:
                     label = Label(
                         chunk.real_address,
@@ -323,7 +323,7 @@ def recursive_parse(*args):
                         include_address=chunk.include_address,
                     )
                     chunk.label = label
-            recurse(chunk.target, chunk.real_address, **chunk.target_args)
+                recurse(chunk.target, chunk.real_address, **chunk.target_args)
         for c in chunk.chunks:
             recurse_pointers(c)
 
