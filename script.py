@@ -333,8 +333,11 @@ def recursive_parse(*args):
     return chunks
 
 
+def sort_chunks(chunks):
+    return sorted(set((c.address, c.last_address, c.to_asm()) for c in chunks))
+
 def print_chunks(chunks):
-    sorted_chunks = sorted(set((c.address, c.last_address, c.to_asm()) for c in chunks))
+    sorted_chunks = sort_chunks(chunks)
     lines = []
     previous_address = None
     for address, last_address, asm in sorted_chunks:
@@ -353,6 +356,79 @@ def print_chunks(chunks):
             lines += [asm]
         previous_address = last_address
     return ('\n'.join(lines) + '\n').encode('utf-8')
+
+def insert_chunks(chunks):
+    closure = {}
+    def next_chunk():
+        closure['previous_address'] = closure.get('last_address')
+        closure['previous_asm'] = closure.get('asm')
+        try:
+            chunk = sorted_chunks.next()
+        except StopIteration:
+            chunk = None, None, None
+        closure['address'], closure['last_address'], closure['asm'] = chunk
+        return current_chunk()
+    def current_chunk():
+        return closure['address'], closure['last_address'], closure['asm']
+    def previous_address():
+        return closure.get('previous_address')
+    def previous_asm():
+        return closure.get('previous_asm')
+
+    def insert(filename):
+        address, last_address, asm = current_chunk()
+        lines = open(filename).readlines()
+        for i, line in enumerate(lines):
+            if '.include' in line:
+                sub = line.split('"')[1]
+                insert(sub)
+            elif '.incbin "base_emerald.gba"' in line:
+                args = map(eval, line.split(',')[1:3])
+                try:
+                    start, length = args
+                    end = start + length
+                except:
+                    start = args[0]
+                    end = 0x1000000
+
+                # sorry dead chunks
+                while address < start:
+                    address, last_address, asm = next_chunk()
+                    if address is None:
+                        break
+                if address is None:
+                    break
+
+                new_line = ''
+
+                closure['previous_address'] = start
+                while start <= address <= last_address <= end:
+                    if address == end:
+                        break # it's a label
+                    previous = previous_address()
+                    if previous < address:
+                        new_line += '\n\t.incbin "base_emerald.gba", 0x{:x}, 0x{:x}\n'.format(previous, address - previous)
+                    if asm:
+                        if not is_label(previous_asm()) and is_label(asm):
+                            new_line += '\n'
+                        new_line += asm.encode('utf-8') + '\n'
+                    address, last_address, asm = next_chunk()
+                    if address is None:
+                        break
+                previous = previous_address()
+                if new_line and start <= previous < end:
+                    new_line += '\n\t.incbin "base_emerald.gba", 0x{:x}, 0x{:x}\n'.format(previous, end - previous)
+                if new_line:
+                    lines[i] = new_line
+
+                if address is None:
+                    break
+        with open(filename, 'w') as out:
+            out.write(''.join(lines))
+
+    sorted_chunks = iter(sort_chunks(chunks))
+    next_chunk()
+    insert('asm/emerald.s')
 
 def flatten_nested_chunks(*args):
     closure = {'flattened': []}

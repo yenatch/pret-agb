@@ -342,4 +342,5 @@ class MapGroups(List):
 
 
 if __name__ == '__main__':
-    print print_nested_chunks(dump_maps())
+    insert_chunks(flatten_nested_chunks(dump_maps()))
+    #print print_nested_chunks(dump_maps())
