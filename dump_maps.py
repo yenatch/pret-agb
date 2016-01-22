@@ -1,4 +1,5 @@
 from new import classobj
+import os
 
 from event_script import *
 
@@ -27,7 +28,12 @@ class BinFile(Chunk):
 	def to_asm(self):
 		return '\t' + self.name + ' ' + self.asm
 	def create_file(self):
-		with open(self.filename, 'wb') as out:
+		filename = self.filename
+		try:
+			os.makedirs(os.path.dirname(filename))
+		except OSError:
+			pass
+		with open(filename, 'wb') as out:
 			out.write(bytearray(self.value))
 
 class MapBorder(BinFile):
@@ -90,9 +96,9 @@ class MapAttributes(ParamGroup):
 		blockdata_p = self.params['blockdata_p']
 		blockdata_p.width = self.params['width'].value
 		blockdata_p.height = self.params['height'].value
-		blockdata_p.filename = 'maps/{}/map.bin'.format(map_name)
+		blockdata_p.filename = 'data/maps/{}/map.bin'.format(map_name)
 		border_p = self.params['border_p']
-		border_p.filename = 'maps/{}/border.bin'.format(map_name)
+		border_p.filename = 'data/maps/{}/border.bin'.format(map_name)
 
 class MapAttributesPointer(Pointer):
 	target = MapAttributes
@@ -340,7 +346,13 @@ class MapGroups(List):
             chunk.chunks += [label]
             chunk.label = label
 
+def create_files_of_chunks(chunks):
+	for chunk in chunks:
+		if hasattr(chunk, 'create_file'):
+			chunk.create_file()
 
 if __name__ == '__main__':
-    insert_chunks(flatten_nested_chunks(dump_maps()))
+    chunks = flatten_nested_chunks(dump_maps())
+    insert_chunks(chunks)
+    create_files_of_chunks(chunks)
     #print print_nested_chunks(dump_maps())
