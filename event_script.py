@@ -45,6 +45,8 @@ class EventScript(Script):
         """
         Some scripts ending in 'jump' have an extra 'end' afterward.
         """
+        if not self.chunks:
+            return
         chunk = self.chunks[-1]
         if getattr(chunk, 'name', None) not in ['jump']:
             return
