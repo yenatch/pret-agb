@@ -108,7 +108,7 @@ class MapAttributesPointer(Pointer):
 class MapObject(Macro):
 	name = 'object_event'
 	param_classes = [
-		Byte, Word,
+		Byte, FieldGFXId,
 	] + [Byte] * 13 + [
 		EventScriptPointer,
 		Word, Byte, Byte,
@@ -207,6 +207,10 @@ class MapScript1(ParamGroup):
 class MapScript1Pointer(Pointer):
 	target = MapScript1
 
+class MapScript2Entry(Macro):
+	name = 'map_script_2'
+	param_classes = [WordOrVariable, Word, EventScriptPointer]
+
 class MapScript2(ParamGroup):
 	param_classes = [Word]
 	def parse(self):
@@ -215,10 +219,25 @@ class MapScript2(ParamGroup):
 			ParamGroup.parse(self)
 			if self.chunks[-1].value == 0:
 				break
-			self.param_classes += [Word, EventScriptPointer] + [Word]
+			self.param_classes.insert(-1, MapScript2Entry)
 
 class MapScript2Pointer(Pointer):
 	target = MapScript2
+
+class MapScriptEntry(Macro):
+	name = 'map_script'
+	param_classes = [('type', Byte)]
+	def parse(self):
+		self.param_classes = list(self.param_classes)
+		Macro.parse(self)
+		value = self.params['type'].value
+		if value == 0:
+			raise Exception('MapScriptEntry is a terminator')
+		if value in (1, 3, 5, 6, 7):
+			self.param_classes += [MapScript1Pointer]
+		else:
+			self.param_classes += [MapScript2Pointer]
+		Macro.parse(self)
 
 class MapScripts(ParamGroup):
 	param_classes = [Byte]
@@ -226,13 +245,9 @@ class MapScripts(ParamGroup):
 		self.param_classes = list(self.param_classes)
 		while True:
 			ParamGroup.parse(self)
-			byte = self.chunks[-1].value
-			if byte == 0:
+			if self.chunks[-1].value == 0:
 				break
-			if byte in (1, 3, 5, 6, 7):
-				self.param_classes += [MapScript1Pointer] + [Byte]
-			else:
-				self.param_classes += [MapScript2Pointer] + [Byte]
+			self.param_classes.insert(-1, MapScriptEntry)
 
 class MapScriptsPointer(Pointer):
 	target = MapScripts

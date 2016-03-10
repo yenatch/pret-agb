@@ -1446,7 +1446,7 @@ class EventCommand_trainerbattle(Command):
     name = 'trainerbattle'
     description = 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.'
     aliases = ['trainerbattle']
-    param_classes = [Byte] + [('type', Byte), Word, Word,]
+    param_classes = [Byte] + [('type', Byte), TrainerId, Word,]
     def parse(self):
         Command.parse(self)
         self.param_classes = list(self.param_classes)

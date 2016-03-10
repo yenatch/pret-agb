@@ -3,6 +3,8 @@
 """Classes for parsing Pokemon Emerald scripts.
 """
 
+import os
+
 from constants import *
 
 
@@ -165,6 +167,21 @@ class Item(Word):
     @property
     def asm(self):
         return item_constants.get(self.value, str(self.value))
+
+class BFItem(Item):
+	@property
+	def asm(self):
+		return battle_frontier_item_constants.get(self.value, str(self.value))
+
+class TrainerId(Word):
+	@property
+	def asm(self):
+		return trainer_constants.get(self.value, str(self.value))
+
+class FieldGFXId(Word):
+	@property
+	def asm(self):
+		return field_gfx_constants.get(self.value, str(self.value))
 
 class Macro(ParamGroup):
     atomic = True
@@ -376,6 +393,8 @@ def insert_chunks(chunks):
         return closure.get('previous_asm')
 
     def insert(filename):
+        if not os.path.exists(filename):
+            return
         address, last_address, asm = current_chunk()
         lines = open(filename).readlines()
         for i, line in enumerate(lines):

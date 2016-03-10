@@ -1,5 +1,7 @@
 # coding: utf-8
 
+import os
+
 from map_names import map_names
 
 paths_to_search = ['asm/emerald.s']
@@ -7,6 +9,8 @@ paths_to_search = ['asm/emerald.s']
 labels = {}
 
 def find_labels(path):
+	if not os.path.exists(path):
+		return
 	lines = open(path).readlines()
 	for line in lines:
 		if '.include' in line:
@@ -71,11 +75,33 @@ def read_constants(path):
 	lines = open(path).readlines()
 	variables = {}
 	for line in lines:
-		line = line.strip()
+		line = line.split(';')[0].strip()
 		if line.startswith('.set'):
 			name, value = line.split('.set')[1].split(',')
-			variables[name.strip()] = int(value, 0)
+			if '<<' in value: # not supported yet
+				pass
+			else:
+				variables[name.strip()] = int(value, 0)
+	return variables
+
+def reverse_constants(variables):
 	return {v:k for k,v in variables.items()}
 
-pokemon_constants = read_constants('constants/species_constants.s')
-item_constants = read_constants('constants/item_constants.s')
+pokemon_constants = reverse_constants(read_constants('constants/species_constants.s'))
+item_constants = reverse_constants(read_constants('constants/item_constants.s'))
+field_gfx_constants = {
+	v: k for k, v in read_constants('constants/field_object_constants.s').items()
+	if k.startswith('FIELD_OBJ_GFX_')
+}
+trainer_constants = {
+	v: k for k, v in read_constants('constants/trainer_constants.s').items()
+	if k.startswith('TRAINER_')
+	and not k.startswith('TRAINER_PIC_')
+	and not k.startswith('TRAINER_CLASS_')
+	and not k.startswith('TRAINER_CLASS_NAME_')
+	and not k.startswith('TRAINER_ENCOUNTER_MUSIC_')
+}
+frontier_item_constants = {
+	v: k for k, v in read_constants('constants/battle_frontier_constants.s').items()
+	if k.startswith('BATTLE_FRONTIER_ITEM_')
+}
