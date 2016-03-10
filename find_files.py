@@ -4,324 +4,201 @@ from map_names import map_names
 from script import is_label
 
 
+def makedirs(*args, **kwargs):
+	try:
+		os.makedirs(*args, **kwargs)
+	except OSError:
+		pass
+
+
+def split_stuff(root, writes):
+
+	for start, end, filename in writes:
+		makedirs(os.path.dirname(filename))
+		open(filename, 'w').write(''.join(lines[start:end]))
+
+	i = 0
+	new_lines = []
+	lines = open(root).readlines()
+	for start, end, filename in writes:
+		new_lines += lines[i:start]
+		new_lines += ['\t.include "{}"\n'.format(filename)]
+		i = end
+	new_lines += lines[i:]
+
+	open(root, 'w').write(''.join(new_lines))
+
+
+def get_label(line):
+	if is_label(line):
+		return line.split(':')[0]
+
+
 def split_map_scripts():
-
 	root = 'data/data1.s'
-	lines = open(root).readlines()
 
-	seen_names = []
+	seen = []
+	def get_filename():
+		return 'data/maps/{}/scripts.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
-		filename = 'data/maps/{}/scripts.s'.format(seen_names[-1])
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
+		if start is not None:
+			writes.append((start, end, get_filename()))
 
+	writes = []
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
 			if label.endswith('_MapScripts'):
-				if start:
-					write(start, i)
-					start = None
-				name = label.split('_MapScripts')[0][1:]
-				seen_names += [name]
-				start = i
-		# arbitrary end point
-		if '0x271315' in line and 'incbin' in line:
-			if start:
 				write(start, i)
-				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
-
-	open(root, 'w').write(''.join(new_lines))
-
-
-def old_split_map_assets():
-
-	root = 'data/data2.s'
-	lines = open(root).readlines()
-
-	seen_names = []
-
-	writes = []
-	def write(start, end):
-		filename = 'data/maps/{}/attributes.s'.format(seen_names[-1])
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
-
-	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
-			if label.endswith('_MapBorder'):
-				if start:
-					write(start, i)
-					start = None
-				name = label.split('_MapBorder')[0][1:]
-				seen_names += [name]
+				name = label[1:-len('_MapScripts')
+				seen += [name]
 				start = i
-		# dont absorb incbins
-		if 'base_emerald' in line and 'incbin' in line:
-			if start:
-				write(start, i)
-				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
+			# arbitrary stopping point
+			if '0x271315' in line:
+				break
 
-	open(root, 'w').write(''.join(new_lines))
+	split_stuff(root, writes)
+
 
 def split_map_assets():
-
 	root = 'data/data2.s'
-	lines = open(root).readlines()
-
-	writes = []
-	def write(start, end):
-		filename = 'data/maps/_assets.s'
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
 
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
-			enders = ('_MapBorder', '_MapBlockdata', '_MapAttributes')
-			if any(label.endswith(ender) for ender in enders):
-				if not start:
-					start = i
-			else:
-				if start:
-					write(start, i)
-					start = None
-		## arbitrary end point
-		#if '0x481d04' in line and 'base_emerald' in line and 'incbin' in line:
-		#	if start:
-		#		write(start, i)
-		#		start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
+	enders = ('_MapBorder', '_MapBlockdata', '_MapAttributes')
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
+			if any(map(label.endswith, enders)):
+				if start is None: start = i
+			elif start:
+				break
+	end = i
+	split_stuff(root, [(start, end, 'data/maps/_assets.s')])
 
-	open(root, 'w').write(''.join(new_lines))
 
 def split_map_events():
-
 	root = 'data/data2.s'
-	lines = open(root).readlines()
 
-	seen_names = []
+	seen = []
+	def get_filename():
+		return 'data/maps/{}/events.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
-		filename = 'data/maps/{}/events.s'.format(seen_names[-1])
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
+		if start is not None:
+			writes.append((start, end, get_filename()))
 
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
-			for ender in ('_MapObjects', '_MapWarps', '_MapCoordEvents', '_MapBGEvents', '_MapEvents'):
+	enders = ('_MapObjects', '_MapWarps', '_MapCoordEvents', '_MapBGEvents', '_MapEvents')
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
+			for ender in enders:
 				if label.endswith(ender):
 					name = label.split(ender)[0][1:]
-					if name not in seen_names:
-						if start:
-							write(start, i)
-							start = None
-						seen_names += [name]
+					if name not in seen:
+						write(start, i)
+						seen += [name]
 						start = i
 					break
 		# dont absorb incbins
 		if 'base_emerald' in line and 'incbin' in line:
-			if start:
-				write(start, i)
-				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
+			write(start, i)
+			start = None
 
-	open(root, 'w').write(''.join(new_lines))
+	split_stuff(root, writes)
 
 
 def split_map_headers():
-
 	root = 'data/data2.s'
-	lines = open(root).readlines()
 
-	seen_names = []
+	seen = []
+	def get_filename():
+		return 'data/maps/{}/header.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
-		filename = 'data/maps/{}/header.s'.format(seen_names[-1])
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
+		if start is not None:
+			writes.append((start, end, get_filename()))
 
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
 			name = label[1:]
 			if name in map_names:
-				if start:
-					write(start, i)
-					start = None
-				seen_names += [name]
+				write(start, i)
+				seen += [name]
 				start = i
 			else:
-				if start:
-					write(start, i)
-					start = None
-		# dont absorb incbins
-		if 'base_emerald' in line and 'incbin' in line:
-			if start:
 				write(start, i)
 				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
+		# dont absorb incbins
+		if 'base_emerald' in line and 'incbin' in line:
+			write(start, i)
+			start = None
 
-	open(root, 'w').write(''.join(new_lines))
+	split_stuff(root, writes)
 
 
 def split_map_groups():
-
 	root = 'data/data2.s'
-	lines = open(root).readlines()
-
-	writes = []
-	def write(start, end):
-		filename = 'data/maps/_groups.s'
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
 
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
-			if 'gMapGroup' in label:
-				if not start:
-					start = i
-			else:
-				if start:
-					write(start, i)
-					start = None
-		# dont absorb incbins
-		if 'base_emerald' in line and 'incbin' in line:
-			if start:
-				write(start, i)
-				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
-
-	open(root, 'w').write(''.join(new_lines))
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
+			if label.startswith('gMapGroup'):
+				if start is not None: start = i
+			elif start is not None:
+				break
+	end = i
+	split_stuff(root, [(start, end, 'data/maps/_groups.s')])
 
 
 def split_map_connections():
-
 	root = 'data/data2.s'
-	lines = open(root).readlines()
 
-	seen_names = []
+	seen = []
+	def get_filename():
+		return 'data/maps/{}/connections.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
-		filename = 'data/maps/{}/connections.s'.format(seen_names[-1])
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		open(filename, 'w').write(''.join(lines[start:end]))
-		writes.append((start, end, filename))
+		if start is not None:
+			writes.append((start, end, get_filename()))
 
 	start = None
-	for i, line in enumerate(lines):
-		if is_label(line):
-			label = line.split(':')[0]
-			ender = '_MapConnectionsList'
+	ender = '_MapConnectionsList'
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
 			if label.endswith(ender):
-				if start:
-					write(start, i)
-					start = None
+				write(start, i)
 				name = label.split(ender)[0][1:]
 				seen_names += [name]
 				start = i
 			elif not label.endswith('_MapConnections'):
-				if start:
-					write(start, i)
-					start = None
-		# dont absorb incbins
-		if 'base_emerald' in line and 'incbin' in line:
-			if start:
 				write(start, i)
 				start = None
-	i = 0
-	new_lines = []
-	for start, end, filename in writes:
-		new_lines += lines[i:start]
-		new_lines += ['\t.include "{}"\n'.format(filename)]
-		i = end
-	new_lines += lines[i:]
+		# dont absorb incbins
+		if 'base_emerald' in line and 'incbin' in line:
+			write(start, i)
+			start = None
 
-	open(root, 'w').write(''.join(new_lines))
+	split_stuff(root, writes)
 
-if __name__ == '__main__':
+
+def main():
 	split_map_scripts()
 	split_map_assets()
 	split_map_events()
 	split_map_headers()
 	split_map_groups()
 	split_map_connections()
+
+if __name__ == '__main__':
+	main()
