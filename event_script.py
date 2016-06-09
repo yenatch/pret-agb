@@ -12,11 +12,6 @@ from text import *
 from movement import *
 
 
-force_stop_addresses = [
-	0x209a99, # SlateportCityBattleTent waitstate
-	0x2c8381, # TrainerHill1F missing end
-]
-
 class EventScript(Script):
     # event_command_classes doesn't exist yet, but it depends on EventScript being defined first.
     @property
@@ -26,7 +21,7 @@ class EventScript(Script):
     def parse(self):
         Script.parse(self)
         self.check_forced_stops()
-        self.filter_msgbox()
+        self.filter_macros()
         self.check_extra_ends()
 
     def check_forced_stops(self):
@@ -34,6 +29,7 @@ class EventScript(Script):
         There are some malformed scripts that need to be manually ended.
         This function rewinds a script if it passes through an address in force_stop_addresses.
         """
+        force_stop_addresses = self.version['force_stop_addresses']
         for i, chunk in enumerate(self.chunks):
             if chunk.last_address in force_stop_addresses:
                 self.chunks = self.chunks[:i+1]
@@ -51,13 +47,17 @@ class EventScript(Script):
         if getattr(chunk, 'name', None) not in ['jump']:
             return
         address = self.last_address
-        command_class = self.commands.get(Byte(address).value)
+        command_class = self.commands.get(Byte(address, version=self.version, rom=self.rom).value)
         if command_class:
             if command_class.name in ['end']:
-                command = command_class(address)
+                command = command_class(address, version=self.version, rom=self.rom)
                 self.chunks += [command]
                 address += command.length
         self.last_address = address
+
+    def filter_macros(self):
+        self.filter_msgbox()
+        self.filter_switch()
 
     def filter_msgbox(self):
         """
@@ -77,18 +77,95 @@ class EventScript(Script):
                         classes[2] = TextPointer
                         loadptr.param_classes = classes
                         loadptr.parse()
+                    index = self.chunks.index
+                    #if len(loadptrs) == 1 and index(loadptrs[0]) == index(command) - 1:
+                    #    pass
                     loadptrs = []
 
+    def filter_switch(self):
+        copyvar = None
+        compare = None
+        i = 0
+        while i < len(self.chunks):
+            command = self.chunks[i]
+            name = getattr(command, 'name', None)
+            if name == 'copyvar':
+                if command.chunks[1].value == 0x8000:
+                    copyvar = command
+                    macro = Switch(chunks=[copyvar])
+                    self.chunks.pop(i)
+                    self.chunks.insert(i, macro)
+            elif name == 'compare':
+                if copyvar:
+                    if command.chunks[1].value == 0x8000:
+                        compare = command
+                    else:
+                        compare = None
+            elif name == 'jumpif':
+                if command.chunks[1].value == 1:
+                    if copyvar and compare and compare.last_address == command.address:
+                        macro = SwitchCase(compare=compare, jumpif=command)
+                        try:
+                            index = self.chunks.index(compare)
+                            self.chunks.pop(index)
+                            self.chunks.pop(index)
+                            self.chunks.insert(index, macro)
+			    i -= 1
+                        except:
+                            pass
+            if name != 'compare':
+                compare = None
+            i += 1
+
 class EventScriptPointer(Pointer):
-	target = EventScript
+    target = EventScript
+
+class Switch(Macro):
+    name = 'switch'
+    def parse(self):
+        self.address = self.chunks[0].address
+        self.last_address = self.chunks[-1].last_address
+    @property
+    def asm(self):
+        return self.chunks[0].params['source'].asm
+
+class SwitchCase(Macro):
+    name = 'case'
+    def parse(self):
+        self.chunks = [self.compare, self.jumpif]
+        self.address = self.chunks[0].address
+        self.last_address = self.chunks[-1].last_address
+    @property
+    def asm(self):
+        chunks = [self.compare.params['value'], self.jumpif.params['destination']]
+        return ', '.join(param.asm for param in chunks)
 
 
 class Pokemart(ParamGroup):
-	param_classes = [ItemList, EventScript]
+    param_classes = [ItemList, EventScript]
 
 class PokemartPointer(Pointer):
-	target = Pokemart
+    target = Pokemart
 
+
+class TrainerbattleArgs(ParamGroup):
+	param_classes = [('type', Byte), TrainerId, Word,]
+	def parse(self):
+		ParamGroup.parse(self)
+		self.param_classes = list(self.param_classes)
+
+		type_ = self.params['type'].value
+		if type_ != 3:
+			self.param_classes += [TextPointer]
+		self.param_classes += [TextPointer]
+		if type_ in (1, 2):
+			self.param_classes += [EventScriptPointer]
+		if type_ in (4, 7, 6, 8):
+			self.param_classes += [TextPointer]
+		if type_ in (6, 8):
+			self.param_classes += [EventScriptPointer]
+
+		ParamGroup.parse(self)
 
 event_commands = {
     0x00: { 'name': 'snop',
@@ -111,7 +188,7 @@ event_commands = {
         'aliases': ['end'],
     },
     0x03: { 'name': 'return',
-	'end': True,
+        'end': True,
         'param_names': [],
         'param_types': [],
         'aliases': ['return'],
@@ -644,14 +721,14 @@ event_commands = {
         'param_types': [WordOrVariable, 'byte'],
         'aliases': ['faceplayer'],
     },
-    ## params vary depending on the value of `type`.
-    ## See EventCommand_trainerbattle.
-    #0x5c: { 'name': 'trainerbattle',
-    #    'param_names': ['type', 'index', 'local_id', 'intro', 'loss', 'extra', 'extra2'],
-    #    'param_types': ['byte', 'word', 'word', 'pointer', 'pointer', 'pointer', 'pointer'],
-    #    'aliases': ['trainerbattle'],
-    #    'description': 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.',
-    #},
+    # Params vary depending on the value of `type`.
+    # See TrainerbattleArgs.
+    0x5c: { 'name': 'trainerbattle',
+        'param_names': ['args'],
+        'param_types': [TrainerbattleArgs],
+        'aliases': ['trainerbattle'],
+        'description': 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.',
+    },
     0x5d: { 'name': 'reptrainerbattle',
         'param_names': [],
         'param_types': [],
@@ -806,10 +883,10 @@ event_commands = {
         'aliases': ['showcontestwinner'],
         'description': 'In FireRed, this command is a nop. (The argument is discarded.)',
     },
-    0x78: { 'name': 'braille',
+    0x78: { 'name': 'braillemsg',
         'param_names': ['text'],
         'param_types': [BraillePointer],
-        'aliases': ['braille'],
+        'aliases': ['braillemsg'],
         'description': 'Displays the string at pointer as braille text in a standard message box. The string must be formatted to use braille characters.',
     },
     0x79: { 'name': 'givepokemon',
@@ -1437,48 +1514,21 @@ def make_command_classes(commands):
         attributes['param_classes'] = [Byte] + zip(command['param_names'], map(get_param_class, command['param_types']))
 
         classes[byte] = classobj(class_name, (Command,), attributes)
+        classes[command['name']] = classes[byte]
     return classes
 
 event_command_classes = make_command_classes(event_commands)
 
-class EventCommand_trainerbattle(Command):
-    id = 0x5c
-    name = 'trainerbattle'
-    description = 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.'
-    aliases = ['trainerbattle']
-    param_classes = [Byte] + [('type', Byte), TrainerId, Word,]
-    def parse(self):
-        Command.parse(self)
-        self.param_classes = list(self.param_classes)
-        type_ = self.params['type'].value
-        if type_ != 3:
-            self.param_classes += [TextPointer]
-        self.param_classes += [TextPointer]
 
-        ## sanky
-        #if type_ in (4, 7, 8):
-        #    self.param_classes += [TextPointer]
-        #if type_ in (1, 2, 8):
-        #    self.param_classes += [EventScriptPointer]
-        if type_ in (1, 2):
-            self.param_classes += [EventScriptPointer]
-        if type_ in (4, 7, 6, 8):
-            self.param_classes += [TextPointer]
-        if type_ in (6, 8):
-            self.param_classes += [EventScriptPointer]
-
-        Command.parse(self)
-
-    # TODO: params vary depending on the value of `type`.
-    # Create a direct Command subclass for this command.
-    #0x5c: { 'name': 'trainerbattle',
-    #    'param_names': ['type', 'index', 'local_id', 'intro', 'loss', 'extra', 'extra2'],
-    #    'param_types': ['byte', 'word', 'word', 'pointer', 'pointer', 'pointer', 'pointer'],
-    #    'aliases': ['trainerbattle'],
-    #    'description': 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.',
-    #},
-
-event_command_classes[EventCommand_trainerbattle.id] = EventCommand_trainerbattle
+# Extend jumpif
+class EventCommand_jumpif(event_command_classes['jumpif']):
+    def to_asm(self):
+        if self.params['condition'].value == 1:
+            return '\tjumpeq ' + ', '.join(param.asm for param in self.chunks[2:])
+        else:
+            return super(EventCommand_jumpif, self).to_asm()
+event_command_classes[EventCommand_jumpif.id] = EventCommand_jumpif
+event_command_classes['jumpif'] = EventCommand_jumpif
 
 
 if __name__ == '__main__':
@@ -1487,7 +1537,12 @@ if __name__ == '__main__':
     ap.add_argument('address')
     args = ap.parse_args()
 
+    import versions
+    version = versions.ruby
+    setup_version(version)
     print print_recursive(
         EventScript,
-        int(args.address, 16)
+        int(args.address, 16),
+        version=version,
+        rom=version['baserom']
     )

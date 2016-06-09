@@ -1,14 +1,16 @@
-from new import classobj
 import os
 
 from event_script import *
+import versions
+import find_files
 
+g = ''
 
-emerald_map_groups_address = 0x486578
-
-def dump_maps(address=emerald_map_groups_address):
+def dump_maps(version):
+	rom = version['baserom']
+	address = version['map_groups_address']
 	label = Label(address, asm='gMapGroups')
-	chunks = recursive_parse(MapGroups, address)
+	chunks = recursive_parse(MapGroups, address, version=version, rom=rom)
 	chunks[address].label = label
 	return chunks.values()
 
@@ -92,7 +94,7 @@ class MapAttributes(ParamGroup):
 	]
 	def parse(self):
 		ParamGroup.parse(self)
-		map_name = get_map_name(self.group, self.num)
+		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
 		blockdata_p = self.params['blockdata_p']
 		blockdata_p.width = self.params['width'].value
 		blockdata_p.height = self.params['height'].value
@@ -314,10 +316,10 @@ class Map(ParamGroup):
 
 	@property
 	def context_label(self):
-		map_name = get_map_name(self.group, self.num)
+		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
 		if map_name:
-			return 'g' + map_name
-		return 'g'
+			return g + map_name
+		return g
 
 class MapPointer(Pointer):
 	target = Map
@@ -325,20 +327,21 @@ class MapPointer(Pointer):
 
 	@property
 	def context_label(self):
-		map_name = get_map_name(self.group, self.num)
+		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
 		if map_name:
-			return 'g' + map_name
-		return 'g'
+			return g + map_name
+		return g
 
 class MapGroup(List):
     def parse(self):
+        map_groups = self.version['map_groups']
         self.param_classes = [MapPointer]
         self.count = len(map_groups[self.group])
         List.parse(self)
         for i, chunk in enumerate(self.chunks):
             chunk.group = self.group
             chunk.num = i
-            label_name = 'g' + map_groups[self.group][i]
+            label_name = g + map_groups[self.group][i]
             label = Label(chunk.real_address)
             label.asm = label_name
             chunk.chunks += [label]
@@ -351,7 +354,7 @@ class MapGroupPointer(Pointer):
 class MapGroups(List):
     param_classes = [MapGroupPointer]
     def parse(self):
-        self.count = len(map_groups)
+        self.count = len(self.version['map_groups'])
         List.parse(self)
         for i, chunk in enumerate(self.chunks):
             chunk.group = i
@@ -367,7 +370,18 @@ def create_files_of_chunks(chunks):
 			chunk.create_file()
 
 if __name__ == '__main__':
-    chunks = flatten_nested_chunks(dump_maps())
-    insert_chunks(chunks)
-    create_files_of_chunks(chunks)
-    #print print_nested_chunks(dump_maps())
+    from argparse import ArgumentParser as ap
+    ap = ap()
+    ap.add_argument('version', nargs='?', default='ruby')
+    ap.add_argument('--debug', action='store_true')
+    args = ap.parse_args()
+    version = versions.__dict__[args.version]
+    setup_version(version)
+    if args.debug:
+        print print_nested_chunks(dump_maps(version))
+    else:
+        chunks = flatten_nested_chunks(dump_maps(version))
+        for path in version['maps_paths']:
+            insert_chunks(chunks, path, version)
+        create_files_of_chunks(chunks)
+        find_files.main(version)

@@ -1,38 +1,29 @@
 # coding: utf-8
 
-import os
-
-from map_names import map_names
-
-paths_to_search = ['asm/emerald.s']
-
-labels = {}
+from os.path import exists
 
 def find_labels(path):
-	if not os.path.exists(path):
-		return
+	labels = {}
+	if not exists(path):
+		return labels
 	lines = open(path).readlines()
 	for line in lines:
 		if '.include' in line:
 			incpath = line.split('"')[1]
-			find_labels(incpath)
-		elif ': ;' in line:
+			labels.update(find_labels(incpath))
+		elif ': @' in line:
 			i = line.find(':')
-			label, address = line[:i], int(line[i+3:], 16)
-			labels[address] = label
-
-for path in paths_to_search:
-	find_labels(path)
-
+			try:
+				label, address = line[:i], int(line[i+3:].split()[0], 16)
+				labels[address] = label
+			except:
+				pass
+	return labels
 
 def load_rom(filename):
     return bytearray(open(filename).read())
 
-baserom = load_rom('base_emerald.gba')
-
-
-def read_map_groups():
-	path = 'constants/map_constants.s'
+def read_map_groups(path, map_names):
 	lines = open(path).readlines()
 	variables = {}
 	maps = {}
@@ -52,7 +43,8 @@ def read_map_groups():
 			maps[group][num] = name
 			variables['cur_map_num'] += 1
 
-        # Replace the extracted names with the ones in map_names.py.
+        # Replace the constants with capitalized map names.
+        # This is only necessary if the constants have not already been fixed.
         i = 0
         for group_num, group in maps.items():
             for map_num, name in group.items():
@@ -62,9 +54,7 @@ def read_map_groups():
 
 	return maps
 
-map_groups = read_map_groups()
-
-def get_map_name(group, num):
+def get_map_name(map_groups, group, num):
 	group = map_groups.get(group)
 	if group:
 		label = group.get(num)
@@ -75,7 +65,7 @@ def read_constants(path):
 	lines = open(path).readlines()
 	variables = {}
 	for line in lines:
-		line = line.split(';')[0].strip()
+		line = line.split('@')[0].strip()
 		if line.startswith('.set'):
 			name, value = line.split('.set')[1].split(',')
 			if '<<' in value: # not supported yet
@@ -87,21 +77,40 @@ def read_constants(path):
 def reverse_constants(variables):
 	return {v:k for k,v in variables.items()}
 
-pokemon_constants = reverse_constants(read_constants('constants/species_constants.s'))
-item_constants = reverse_constants(read_constants('constants/item_constants.s'))
-field_gfx_constants = {
-	v: k for k, v in read_constants('constants/field_object_constants.s').items()
-	if k.startswith('FIELD_OBJ_GFX_')
-}
-trainer_constants = {
-	v: k for k, v in read_constants('constants/trainer_constants.s').items()
-	if k.startswith('TRAINER_')
-	and not k.startswith('TRAINER_PIC_')
-	and not k.startswith('TRAINER_CLASS_')
-	and not k.startswith('TRAINER_CLASS_NAME_')
-	and not k.startswith('TRAINER_ENCOUNTER_MUSIC_')
-}
-frontier_item_constants = {
-	v: k for k, v in read_constants('constants/battle_frontier_constants.s').items()
-	if k.startswith('BATTLE_FRONTIER_ITEM_')
-}
+def read_reverse_constants(path):
+	return reverse_constants(read_constants(path))
+
+
+def setup_version(version):
+	version.update({
+		'baserom': load_rom(version['baserom_path']),
+		'map_groups': read_map_groups('constants/map_constants.s', version['map_names']),
+		'pokemon_constants': read_reverse_constants('constants/species_constants.s'),
+		'item_constants': read_reverse_constants('constants/item_constants.s'),
+		'trainer_constants': {
+			v: k for k, v in read_constants('constants/trainer_constants.s').items()
+			if k.startswith('TRAINER_')
+			and not k.startswith('TRAINER_PIC_')
+			and not k.startswith('TRAINER_CLASS_')
+			and not k.startswith('TRAINER_CLASS_NAME_')
+			and not k.startswith('TRAINER_ENCOUNTER_MUSIC_')
+		},
+	})
+
+	version['labels'] = {}
+	for path in version['maps_paths']:
+		version['labels'].update(find_labels(path))
+
+	path = version.get('frontier_item_constants_path')
+	if path:
+		version['frontier_item_constants'] = {
+			v: k for k, v in read_constants(path).items()
+			if k.startswith('BATTLE_FRONTIER_ITEM_')
+		}
+	path = version.get('field_object_constants_path')
+	if path:
+		version['field_gfx_constants'] = {
+			v: k for k, v in read_constants(path).items()
+			if k.startswith('FIELD_OBJ_GFX_')
+			or k.startswith('MAP_OBJ_GFX_')
+		}

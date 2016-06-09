@@ -1,8 +1,9 @@
 import os
 
-from map_names import map_names
 from script import is_label
+import versions
 
+g = ''
 
 def makedirs(*args, **kwargs):
 	try:
@@ -13,6 +14,7 @@ def makedirs(*args, **kwargs):
 
 def split_stuff(root, writes):
 
+	lines = open(root).readlines()
 	for start, end, filename in writes:
 		makedirs(os.path.dirname(filename))
 		open(filename, 'w').write(''.join(lines[start:end]))
@@ -30,38 +32,87 @@ def split_stuff(root, writes):
 
 
 def get_label(line):
+	if '.global' in line:
+		return line.split(' ')[1].strip()
 	if is_label(line):
-		return line.split(':')[0]
+		return line.split(':')[0].strip()
 
 
-def split_map_scripts():
+def split_map_scripts(version):
 	root = 'data/data1.s'
 
 	seen = []
 	def get_filename():
-		return 'data/maps/{}/scripts.s'.format(seen[-1])
+		return 'data/maps/scripts/{}.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
 		if start is not None:
 			writes.append((start, end, get_filename()))
 
-	writes = []
 	start = None
 	for i, line in enumerate(open(root)):
 		label = get_label(line)
 		if label:
 			if label.endswith('_MapScripts'):
+				name = label[len(g):-len('_MapScripts')]
+				if name not in seen:
+					write(start, i)
+					seen += [name]
+					start = i
+			elif (
+				'_EventScript_' not in label
+				and '_MapScript1_' not in label
+				and '_MapScript2_' not in label
+				and ((not seen) or (seen[-1] + '_' not in label))
+			):
 				write(start, i)
-				name = label[1:-len('_MapScripts')
-				seen += [name]
-				start = i
+				start = None
 			# arbitrary stopping point
-			if '0x271315' in line:
-				break
+			if version['version'] == 'emerald':
+				if '0x271315' in line:
+					break
 
 	split_stuff(root, writes)
 
+def split_map_text(version):
+	if version['version'] == 'emerald':
+		return
+
+	root = 'data/data1.s'
+
+	seen = []
+	def get_filename():
+		return 'data/maps/text/{}.s'.format(seen[-1])
+
+	writes = []
+	def write(start, end):
+		if start is not None:
+			writes.append((start, end, get_filename()))
+
+	start = None
+	for i, line in enumerate(open(root)):
+		label = get_label(line)
+		if label:
+			if '_Text_' in label:
+				name = label[len(g):label.find('_Text_')]
+				if name not in seen:
+					write(start, i)
+					seen += [name]
+					start = i
+				elif seen and name != seen[-1]:
+					write(start, i)
+					start = None
+			else:
+				write(start, i)
+				start = None
+		if version['version'] == 'ruby':
+			if '0x19f7de' in line:
+				write(start, i)
+				start = None
+				#break
+
+	split_stuff(root, writes)
 
 def split_map_assets():
 	root = 'data/data2.s'
@@ -84,7 +135,7 @@ def split_map_events():
 
 	seen = []
 	def get_filename():
-		return 'data/maps/{}/events.s'.format(seen[-1])
+		return 'data/maps/events/{}.s'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
@@ -98,7 +149,7 @@ def split_map_events():
 		if label:
 			for ender in enders:
 				if label.endswith(ender):
-					name = label.split(ender)[0][1:]
+					name = label.split(ender)[0][len(g):]
 					if name not in seen:
 						write(start, i)
 						seen += [name]
@@ -112,7 +163,7 @@ def split_map_events():
 	split_stuff(root, writes)
 
 
-def split_map_headers():
+def split_map_headers(version):
 	root = 'data/data2.s'
 
 	seen = []
@@ -128,11 +179,12 @@ def split_map_headers():
 	for i, line in enumerate(open(root)):
 		label = get_label(line)
 		if label:
-			name = label[1:]
-			if name in map_names:
-				write(start, i)
-				seen += [name]
-				start = i
+			name = label[len(g):]
+			if name in version['map_names']:
+				if name not in seen:
+					write(start, i)
+					seen += [name]
+					start = i
 			else:
 				write(start, i)
 				start = None
@@ -152,7 +204,7 @@ def split_map_groups():
 		label = get_label(line)
 		if label:
 			if label.startswith('gMapGroup'):
-				if start is not None: start = i
+				if start is None: start = i
 			elif start is not None:
 				break
 	end = i
@@ -177,10 +229,11 @@ def split_map_connections():
 		label = get_label(line)
 		if label:
 			if label.endswith(ender):
-				write(start, i)
-				name = label.split(ender)[0][1:]
-				seen_names += [name]
-				start = i
+				name = label.split(ender)[0][len(g):]
+				if name not in seen:
+					write(start, i)
+					seen += [name]
+					start = i
 			elif not label.endswith('_MapConnections'):
 				write(start, i)
 				start = None
@@ -192,13 +245,14 @@ def split_map_connections():
 	split_stuff(root, writes)
 
 
-def main():
-	split_map_scripts()
+def main(version):
+	split_map_scripts(version)
 	split_map_assets()
 	split_map_events()
-	split_map_headers()
+	split_map_headers(version)
 	split_map_groups()
 	split_map_connections()
+	split_map_text(version)
 
 if __name__ == '__main__':
-	main()
+	main(versions.ruby)

@@ -273,7 +273,7 @@ def make_event_macro(byte, cmd, enum=False):
 
 	if cmd.has_key('description'):
 		lines = cmd['description'].split('\n')
-		text += '\n'.join(['\t; ' + line for line in lines]) + '\n'
+		text += '\n'.join(['\t@ ' + line for line in lines]) + '\n'
 
 	const_text = '_' + name
 	byte_text = '0x{:02x}'.format(byte)
@@ -286,7 +286,7 @@ def make_event_macro(byte, cmd, enum=False):
 
 	"""
 	alias_base = (
-		'\t.macro {alias} {args} ; alias\n' +
+		'\t.macro {alias} {args} @ alias\n' +
 		'\t{name} {passed_args}\n' +
 		'\t.endm\n'
 	)
@@ -295,7 +295,7 @@ def make_event_macro(byte, cmd, enum=False):
 	"""
 	"""
 	if aliases:
-		text += '; aliases: ' + ', '.join(aliases) + '\n'
+		text += '@ aliases: ' + ', '.join(aliases) + '\n'
 	"""
 
 	return text

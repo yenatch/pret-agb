@@ -1,0 +1,391 @@
+# coding: utf-8
+
+"""Charmap for Pokémon Emerald.
+"""
+
+def decode(input, decode_charmap):
+	old = bytearray(input)
+	new = u''
+	i = 0
+	len_old = len(old)
+	while i < len_old:
+		start = i
+		item = decode_charmap
+		while hasattr(item, 'get'):
+			char = old[i]
+			item_ = item.get(char)
+			if item_ is None:
+				item_ = item.get(None)
+			item = item_
+			i += 1
+		chars = item
+		if chars is None:
+			chars = ''.join('{' + hex(byte) + '}' for byte in old[start:i])
+		new += chars
+	return new
+
+def encode(input, encode_charmap):
+	old = input
+	new = ''
+	i = 0
+	len_old = len(old)
+	while i < len_old:
+		char = old[i]
+		if char == '{':
+			j = i + old.find('}', i) + 1
+			char = old[i:j]
+			i = j
+		else:
+			i += 1
+		chars = encode_charmap.get(char)
+		if chars is None:
+			# assume hex i.e. '{FF}'
+			chars = chr(int(char[1:-1], 16))
+		new += chars
+	return new
+
+colors = [
+	'TRANSPARENT',
+	'DARK_GREY',
+	'RED',
+	'GREEN',
+	'BLUE',
+	'YELLOW',
+	'CYAN',
+	'MAGENTA',
+	'LIGHT_GREY',
+	'BLACK',
+	'BLACK2',
+	'SILVER',
+	'WHITE',
+	'SKY_BLUE',
+	'LIGHT_BLUE',
+	'WHITE2',
+],
+
+emerald_decode = {
+	0x00: u' ',
+	0x01: u'À',
+	0x02: u'Á',
+	0x03: u'Â',
+	0x04: u'Ç',
+	0x05: u'È',
+	0x06: u'É',
+	0x07: u'Ê',
+	0x08: u'Ë',
+	0x09: u'Ì',
+	0x0A: u'{0x0A}', # None
+	0x0B: u'Î',
+	0x0C: u'Ï',
+	0x0D: u'Ò',
+	0x0E: u'Ó',
+	0x0F: u'Ô',
+	0x10: u'Œ',
+	0x11: u'Ù',
+	0x12: u'Ú',
+	0x13: u'Û',
+	0x14: u'Ñ',
+	0x15: u'ß',
+	0x16: u'à',
+	0x17: u'á',
+	0x18: u'{0x18}', # None
+	0x19: u'ç',
+	0x1A: u'è',
+	0x1B: u'é',
+	0x1C: u'ê',
+	0x1D: u'ë',
+	0x1E: u'ì',
+	0x1F: u'{0x1F}', # None
+	0x20: u'î',
+	0x21: u'ï',
+	0x22: u'ò',
+	0x23: u'ó',
+	0x24: u'ô',
+	0x25: u'œ',
+	0x26: u'ù',
+	0x27: u'ú',
+	0x28: u'û',
+	0x29: u'ñ',
+	0x2A: u'º',
+	0x2B: u'ª',
+	0x2C: u'¹',
+	0x2D: u'&',
+	0x2E: u'+',
+	0x2F: u'{0x2F}', # None
+	0x30: u'{0x30}', # None
+	0x31: u'{0x31}', # None
+	0x32: u'{0x32}', # None
+	0x33: u'{0x33}', # None
+	0x34: u'{0x34}', # None # '[Lv]'
+	0x35: u'=',
+	0x36: u';',
+	0x37: u'{0x37}', # None
+	0x38: u'{0x38}', # None
+	0x39: u'{0x39}', # None
+	0x3A: u'{0x3A}', # None
+	0x3B: u'{0x3B}', # None
+	0x3C: u'{0x3C}', # None
+	0x3D: u'{0x3D}', # None
+	0x3E: u'{0x3E}', # None
+	0x3F: u'{0x3F}', # None
+	0x40: u'{0x40}', # None
+	0x41: u'{0x41}', # None
+	0x42: u'{0x42}', # None
+	0x43: u'{0x43}', # None
+	0x44: u'{0x44}', # None
+	0x45: u'{0x45}', # None
+	0x46: u'{0x46}', # None
+	0x47: u'{0x47}', # None
+	0x48: u'{0x48}', # None
+	0x49: u'{0x49}', # None
+	0x4A: u'{0x4A}', # None
+	0x4B: u'{0x4B}', # None
+	0x4C: u'{0x4C}', # None
+	0x4D: u'{0x4D}', # None
+	0x4E: u'{0x4E}', # None
+	0x4F: u'{0x4F}', # None
+	0x50: u'{0x50}', # None
+	0x51: u'¿',
+	0x52: u'¡',
+	0x53: {
+		None: u'{PK}',
+		0x54: u'{PKMN}',
+	},
+	0x54: u'{MN}',
+	0x55: {
+		None: u'{PO}',
+		0x56:{0x57:{0x58:{0x59: '{POKEBLOCK}'}}},
+	},
+	0x56: u'{KE}',
+	0x57: u'{BL}',
+	0x58: u'{OC}',
+	0x59: u'{K}',
+	0x5A: u'Í',
+	0x5B: u'%',
+	0x5C: u'(',
+	0x5D: u')',
+	0x5E: u'{0x5E}', # None
+	0x5F: u'{0x5F}', # None
+	0x60: u'{0x60}', # None
+	0x61: u'{0x61}', # None
+	0x62: u'{0x62}', # None
+	0x63: u'{0x63}', # None
+	0x64: u'{0x64}', # None
+	0x65: u'{0x65}', # None
+	0x66: u'{0x66}', # None
+	0x67: u'{0x67}', # None
+	0x68: u'â',
+	0x69: u'{0x69}', # None
+	0x6A: u'{0x6A}', # None
+	0x6B: u'{0x6B}', # None
+	0x6C: u'{0x6C}', # None
+	0x6D: u'{0x6D}', # None
+	0x6E: u'{0x6E}', # None
+	0x6F: u'í',
+	0x70: u'{0x70}', # None
+	0x71: u'{0x71}', # None
+	0x72: u'{0x72}', # None
+	0x73: u'{0x73}', # None
+	0x74: u'{0x74}', # None
+	0x75: u'{0x75}', # None
+	0x76: u'{0x76}', # None
+	0x77: u'{0x77}', # None
+	0x78: u'{0x78}', # None
+	0x79: u'{0x79}', # None
+	0x7A: u'{0x7A}', # None
+	0x7B: u'{0x7B}', # None
+	0x7C: u'{0x7C}', # None
+	0x7D: u'{0x7D}', # None
+	0x7E: u'{0x7E}', # None
+	0x7F: u'{0x7F}',
+	0x80: u'{0x80}', # None
+	0x81: u'{0x81}', # None
+	0x82: u'{0x82}', # None
+	0x83: u'{0x83}', # None
+	0x84: u'{0x84}', # None
+	0x85: u'{0x85}', # None
+	0x86: u'{0x86}', # None
+	0x87: u'{0x87}', # None
+	0x88: u'{0x88}', # None
+	0x89: u'{0x89}', # None
+	0x8A: u'{0x8A}', # None
+	0x8B: u'{0x8B}', # None
+	0x8C: u'{0x8C}', # None
+	0x8D: u'{0x8D}', # None
+	0x8E: u'{0x8E}', # None
+	0x8F: u'{0x8F}', # None
+	0x90: u'{0x90}', # None
+	0x91: u'{0x91}', # None
+	0x92: u'{0x92}', # None
+	0x93: u'{0x93}', # None
+	0x94: u'{0x94}', # None
+	0x95: u'{0x95}', # None
+	0x96: u'{0x96}', # None
+	0x97: u'{0x97}', # None
+	0x98: u'{0x98}', # None
+	0x99: u'{0x99}', # None
+	0x9A: u'{0x9A}', # None
+	0x9B: u'{0x9B}', # None
+	0x9C: u'{0x9C}', # None
+	0x9D: u'{0x9D}', # None
+	0x9E: u'{0x9E}', # None
+	0x9F: u'{0x9F}', # None
+	0xA0: u'{0xA0}', # None
+	0xA1: u'0',
+	0xA2: u'1',
+	0xA3: u'2',
+	0xA4: u'3',
+	0xA5: u'4',
+	0xA6: u'5',
+	0xA7: u'6',
+	0xA8: u'7',
+	0xA9: u'8',
+	0xAA: u'9',
+	0xAB: u'!',
+	0xAC: u'?',
+	0xAD: u'.',
+	0xAE: u'-',
+	0xAF: u'|',
+	0xB0: u'…',
+	0xB1: u'“',
+	0xB2: u'”',
+	0xB3: u'‘',
+	0xB4: u'’', #u'\'',
+	0xB5: u'♂',
+	0xB6: u'♀',
+	0xB7: u'¥',
+	0xB8: u',',
+	0xB9: u'×',
+	0xBA: u'/',
+	0xBB: u'A',
+	0xBC: u'B',
+	0xBD: u'C',
+	0xBE: u'D',
+	0xBF: u'E',
+	0xC0: u'F',
+	0xC1: u'G',
+	0xC2: u'H',
+	0xC3: u'I',
+	0xC4: u'J',
+	0xC5: u'K',
+	0xC6: u'L',
+	0xC7: u'M',
+	0xC8: u'N',
+	0xC9: u'O',
+	0xCA: u'P',
+	0xCB: u'Q',
+	0xCC: u'R',
+	0xCD: u'S',
+	0xCE: u'T',
+	0xCF: u'U',
+	0xD0: u'V',
+	0xD1: u'W',
+	0xD2: u'X',
+	0xD3: u'Y',
+	0xD4: u'Z',
+	0xD5: u'a',
+	0xD6: u'b',
+	0xD7: u'c',
+	0xD8: u'd',
+	0xD9: u'e',
+	0xDA: u'f',
+	0xDB: u'g',
+	0xDC: u'h',
+	0xDD: u'i',
+	0xDE: u'j',
+	0xDF: u'k',
+	0xE0: u'l',
+	0xE1: u'm',
+	0xE2: u'n',
+	0xE3: u'o',
+	0xE4: u'p',
+	0xE5: u'q',
+	0xE6: u'r',
+	0xE7: u's',
+	0xE8: u't',
+	0xE9: u'u',
+	0xEA: u'v',
+	0xEB: u'w',
+	0xEC: u'x',
+	0xED: u'y',
+	0xEE: u'z',
+	0xEF: u'{0xEF}', # None
+	0xF0: u':',
+	0xF1: u'Ä',
+	0xF2: u'Ö',
+	0xF3: u'Ü',
+	0xF4: u'ä',
+	0xF5: u'ö',
+	0xF6: u'ü',
+	0xF7: u'{0xF7}', # None
+	0xF8: u'{0xF8}', # None
+	0xF9: u'{0xF9}', # None
+	0xFA: u'\\l', # None
+	0xFB: u'\\p',
+	0xFC: {
+		0: '{NAME_END}',
+		1: '{COLOR}',
+		2: '{HIGHLIGHT}',
+		3: '{SHADOW}',
+		4: '{COLOR_HIGHLIGHT_SHADOW}',
+		6: '{SIZE}',
+		8: '{PAUSE}',
+		9: '{PAUSE_UNTIL_PRESS}',
+		12: '{ESCAPE}',
+		13: '{SHIFT_TEXT}',
+		16: '{PLAY_MUSIC}',
+		21: '{ENLARGE}',
+		22: '{SET_TO_DEFAULT_SIZE}',
+		23: '{PAUSE_MUSIC}',
+		24: '{RESUME_MUSIC}',
+	},
+	0xFD: {
+		1: u'{PLAYER}',
+		2: u'{STR_VAR_1}',
+		3: u'{STR_VAR_2}',
+		4: u'{STR_VAR_3}',
+		5: u'{KUN}',
+		6: u'{RIVAL}',
+		7: u'{VERSION}',
+		8: u'{EVIL_TEAM}',
+		9: u'{GOOD_TEAM}',
+		10: u'{EVIL_LEADER}',
+		11: u'{GOOD_LEADER}',
+		12: u'{EVIL_LEGENDARY}',
+		13: u'{GOOD_LEGENDARY}',
+	},
+	0xFE: u'\\n',
+	0xFF: u'$',
+}
+
+def reverse_charmap(charmap):
+	encode = {}
+	def recurse(keys, value):
+		if type(value) is dict:
+			for k, v in value.items():
+				if k is None:
+					recurse(keys, v)
+				else:
+					recurse(keys + [k], v)
+		else:
+			encode[value] = ''.join(map(chr, keys))
+	recurse([], charmap)
+	return encode
+
+def old_reverse_charmap(charmap):
+	encode = {}
+	for k, v in charmap.items():
+		if type(v) is dict:
+			for k2, v2 in v.items():
+				if k2 is not None:
+					encode[v2] = chr(k) + chr(k2)
+				else:
+					encode[v2] = chr(k)
+		else:
+			encode[v] = chr(k)
+	return encode
+
+emerald_encode = reverse_charmap(emerald_decode)
+
+ruby_decode = emerald_decode
+ruby_encode = emerald_encode

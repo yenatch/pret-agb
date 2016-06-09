@@ -13,7 +13,7 @@ def is_rom_address(address):
 
 def is_label(asm):
     if asm:
-        line = asm.split(';')[0].rstrip()
+        line = asm.split('@')[0].rstrip()
         if line and line[-1] == ':':
             return True
     return False
@@ -21,7 +21,8 @@ def is_label(asm):
 
 class Object(object):
     arg_names = []
-    rom = baserom
+    rom = None
+    version = None
     def __init__(self, *args, **kwargs):
         map(self.__dict__.__setitem__, self.arg_names, args)
         self.__dict__.update(kwargs)
@@ -36,6 +37,7 @@ class Chunk(Object):
     def length(self):
         return self.last_address - self.address
     def parse(self):
+        #print '@debug: parsing', self.__class__.__name__, 'at', hex(self.address)
         self.pointers = []
         self.chunks = []
         self.last_address = self.address
@@ -105,7 +107,7 @@ class Pointer(Int):
     def get_label(self):
         if hasattr(self, 'label'):
             return self.label.asm
-        return labels.get(self.value)
+        return self.version['labels'].get(self.value)
     @property
     def real_address(self):
         if not is_rom_address(self.value) and not self.value == 0:
@@ -121,7 +123,7 @@ class Pointer(Int):
 
 class ThumbPointer(Pointer):
     def get_label(self):
-        return Pointer.get_label(self) or labels.get(self.value - 1)
+        return Pointer.get_label(self) or self.version['labels'].get(self.value - 1)
 
 class ParamGroup(Chunk):
     param_classes = []
@@ -136,7 +138,11 @@ class ParamGroup(Chunk):
                 name, param_class = item
             except:
                 param_class = item
-            param = param_class(address)
+            param = param_class(
+                address,
+                version=self.version,
+                rom=self.rom,
+            )
             self.chunks += [param]
             if name:
                 self.params[name] = param
@@ -149,39 +155,43 @@ class ParamGroup(Chunk):
 class Variable(Word):
     @property
     def asm(self):
-        return '0x{:x}'.format(self.value)
+        return {
+            0x800c: 'FACING',
+            0x800d: 'RESULT',
+            0x800f: 'LAST_TALKED',
+        }.get(self.value, '0x{:x}'.format(self.value))
 
 class WordOrVariable(Word):
     @property
     def asm(self):
         if self.value >= 0x4000:
-            return '0x{:x}'.format(self.value)
+            return Variable.asm.fget(self)
         return str(self.value)
 
 class Species(Word):
     @property
     def asm(self):
-        return pokemon_constants.get(self.value, str(self.value))
+        return self.version.get('pokemon_constants', {}).get(self.value, str(self.value))
 
 class Item(Word):
     @property
     def asm(self):
-        return item_constants.get(self.value, str(self.value))
+        return self.version.get('item_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
 class BFItem(Item):
 	@property
 	def asm(self):
-		return battle_frontier_item_constants.get(self.value, str(self.value))
+		return self.version.get('battle_frontier_item_constants', {}).get(self.value, str(self.value))
 
 class TrainerId(Word):
 	@property
 	def asm(self):
-		return trainer_constants.get(self.value, str(self.value))
+		return self.version.get('trainer_constants', {}).get(self.value, str(self.value))
 
 class FieldGFXId(Word):
 	@property
 	def asm(self):
-		return field_gfx_constants.get(self.value, str(self.value))
+		return self.version.get('field_gfx_constants', {}).get(self.value, str(self.value))
 
 class Macro(ParamGroup):
     atomic = True
@@ -202,7 +212,7 @@ class Command(Macro):
 
 class Label(Chunk):
     atomic = True
-    context_label = 'g'
+    context_label = '' # 'g'
     default_label_base = 'Unknown'
     include_address = True
     address_comment = True
@@ -214,15 +224,16 @@ class Label(Chunk):
                 label += '_{:X}'.format(self.address)
             self.asm = label
     def to_asm(self):
-        asm = self.asm + ':'
+        asm = self.asm + '::'
         if self.address_comment:
-            asm += ' ; {:X}'.format(0x8000000 + self.address)
+            asm += ' @ {:X}'.format(0x8000000 + self.address)
+        #asm = '\t.global {}\n'.format(self.asm) + asm
         return asm
 
 class Comment(Chunk):
     def to_asm(self):
         if hasattr(self, 'comment') and self.comment:
-            return '; ' + self.comment
+            return '@ ' + self.comment
         return ''
 
 class Script(Chunk):
@@ -234,10 +245,10 @@ class Script(Chunk):
         address = self.address
         end = False
         while not end:
-            byte = Byte(address)
+            byte = Byte(address, version=self.version, rom=self.rom)
             command_class = self.commands.get(byte.value)
             if command_class:
-                command = command_class(address)
+                command = command_class(address, version=self.version, rom=self.rom)
                 self.chunks += [command]
                 end = command.end
                 address += command.length
@@ -265,7 +276,11 @@ class List(Chunk):
 					name, param_class = item
 				except:
 					param_class = item
-				param = param_class(address)
+				param = param_class(
+					address,
+					version=self.version,
+					rom=self.rom,
+				)
 				self.chunks += [param]
 				address += param.length
 		self.last_address = address
@@ -290,9 +305,13 @@ class MapId(Macro):
     def asm(self):
         group = self.params['group'].value
         number = self.params['number'].value
-        map_name = map_groups.get(group, {}).get(number)
+        if group == 0x7f and number == 0x7f:
+            return 'NONE'
+        if group == 0xff and number == 0xff:
+            return 'UNDEFINED'
+        map_name = self.version['map_groups'].get(group, {}).get(number)
         if not map_name:
-            return Word(self.address).asm
+            return Word(self.address, version=self.version, rom=self.rom).asm
         return map_name
     def to_asm(self):
         return '\t' + 'map ' + self.asm
@@ -305,7 +324,7 @@ class WarpMapId(MapId):
     ]
 
 
-def recursive_parse(*args):
+def recursive_parse(*args, **kwargs):
     chunks = {}
     closure = {
         'level': -1,
@@ -338,15 +357,20 @@ def recursive_parse(*args):
                         default_label_base=chunk.target.__name__,
                         context_label=closure['context_labels'][-1],
                         include_address=chunk.include_address,
+			version=chunk.version,
+			rom=chunk.rom,
                     )
-                    asm = labels.get(chunk.value)
+                    asm = chunk.version['labels'].get(chunk.value)
                     if asm and 'Unknown' not in asm: label.asm = asm
                     chunk.label = label
-                recurse(chunk.target, chunk.real_address, **chunk.target_args)
+		target_args = {}
+		target_args.update(kwargs)
+		target_args.update(chunk.target_args)
+                recurse(chunk.target, chunk.real_address, **target_args)
         for c in chunk.chunks:
             recurse_pointers(c)
 
-    recurse(*args)
+    recurse(*args, **kwargs)
     return chunks
 
 
@@ -364,8 +388,8 @@ def print_chunks(chunks):
                     lines += ['']
                 lines += ['\tbaserom 0x{:x}, 0x{:x}'.format(previous_address, address), '']
             elif address < previous_address:
-                if asm: asm = ';' + asm
-                #lines += ['; ERROR (0x{:x}, 0x{:x})'.format(address, previous_address)]
+                if asm: asm = '@' + asm
+                #lines += ['@ ERROR (0x{:x}, 0x{:x})'.format(address, previous_address)]
         if asm:
             if lines and lines[-1]:
                 if is_label(asm) and not is_label(lines[-1]):
@@ -374,7 +398,11 @@ def print_chunks(chunks):
         previous_address = last_address
     return ('\n'.join(lines) + '\n').encode('utf-8')
 
-def insert_chunks(chunks):
+def incbin(path, start, end):
+    return '\t.incbin "{path}", 0x{start:x}, 0x{length:x}'.format(path=path, start=start, length=end - start)
+
+def insert_chunks(chunks, filename, version):
+    baserom_path = version['baserom_path']
     closure = {}
     def next_chunk():
         closure['previous_address'] = closure.get('last_address')
@@ -395,14 +423,13 @@ def insert_chunks(chunks):
     def insert(filename):
         if not os.path.exists(filename):
             return
-        address, last_address, asm = current_chunk()
         lines = open(filename).readlines()
         for i, line in enumerate(lines):
             if '.include' in line:
                 sub = line.split('"')[1]
                 insert(sub)
-            elif '.incbin "base_emerald.gba"' in line:
-                args = map(eval, line.split(',')[1:3])
+            elif '.incbin "{path}"'.format(path=baserom_path) in line:
+                args = map(eval, line.split('@')[0].split(',')[1:3])
                 try:
                     start, length = args
                     end = start + length
@@ -410,6 +437,7 @@ def insert_chunks(chunks):
                     start = args[0]
                     end = 0x1000000
 
+                address, last_address, asm = current_chunk()
                 # sorry dead chunks
                 while address < start:
                     address, last_address, asm = next_chunk()
@@ -426,7 +454,7 @@ def insert_chunks(chunks):
                         break # it's a label
                     previous = previous_address()
                     if previous < address:
-                        new_line += '\n\t.incbin "base_emerald.gba", 0x{:x}, 0x{:x}\n'.format(previous, address - previous)
+                        new_line += '\n' + incbin(baserom_path, previous, address) + '\n'
                     if asm:
                         if not is_label(previous_asm()) and is_label(asm):
                             new_line += '\n'
@@ -436,7 +464,7 @@ def insert_chunks(chunks):
                         break
                 previous = previous_address()
                 if new_line and start <= previous < end:
-                    new_line += '\n\t.incbin "base_emerald.gba", 0x{:x}, 0x{:x}\n'.format(previous, end - previous)
+                    new_line += '\n' + incbin(baserom_path, previous, end) + '\n'
                 if new_line:
                     lines[i] = new_line
 
@@ -447,7 +475,7 @@ def insert_chunks(chunks):
 
     sorted_chunks = iter(sort_chunks(chunks))
     next_chunk()
-    insert('asm/emerald.s')
+    insert(filename)
 
 def flatten_nested_chunks(*args):
     closure = {'flattened': []}
@@ -469,5 +497,5 @@ def flatten_nested_chunks(*args):
 def print_nested_chunks(*args):
     return print_chunks(flatten_nested_chunks(*args))
 
-def print_recursive(class_, address):
-    return print_nested_chunks(recursive_parse(class_, address).values())
+def print_recursive(class_, address, *args, **kwargs):
+    return print_nested_chunks(recursive_parse(class_, address, *args, **kwargs).values())
