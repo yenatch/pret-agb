@@ -111,7 +111,7 @@ class Pointer(Int):
     @property
     def real_address(self):
         if not is_rom_address(self.value) and not self.value == 0:
-            #raise Exception('invalid pointer at 0x{:08x} (0x{:08x})'.format(self.address, self.value))
+            raise Exception('invalid pointer at 0x{:08x} (0x{:08x})'.format(self.address, self.value))
             return None
         return self.value & 0x1ffffff
     @property
@@ -219,7 +219,10 @@ class Label(Chunk):
     def parse(self):
         Chunk.parse(self)
         if not hasattr(self, 'asm'):
-            label = self.context_label + '_' + self.default_label_base
+            if self.context_label:
+                label = self.context_label + '_' + self.default_label_base
+            else:
+                label = self.default_label_base
             if self.include_address:
                 label += '_{:X}'.format(self.address)
             self.asm = label
@@ -294,6 +297,34 @@ class ItemList(List):
 			self.count += 1
 			List.parse(self)
 
+class BinFile(Chunk):
+	atomic = True
+	name = '.incbin'
+	def parse(self):
+		Chunk.parse(self)
+		address = self.address
+		address += self.size
+		self.value = self.rom[self.address:address]
+		self.last_address = address
+	@property
+	def asm(self):
+		return '"' + self.filename + '"'
+	def to_asm(self):
+		return '\t' + self.name + ' ' + self.asm
+	def create_file(self):
+		filename = self.filename
+		try:
+			os.makedirs(os.path.dirname(filename))
+		except OSError:
+			pass
+		with open(filename, 'wb') as out:
+			out.write(bytearray(self.value))
+
+def create_files_of_chunks(chunks):
+	for chunk in chunks:
+		if hasattr(chunk, 'create_file'):
+			chunk.create_file()
+
 
 class MapId(Macro):
     name = 'map'
@@ -328,7 +359,7 @@ def recursive_parse(*args, **kwargs):
     chunks = {}
     closure = {
         'level': -1,
-        'context_labels': ['g'],
+        'context_labels': [''],
     }
     def recurse(class_, address, *args_, **kwargs_):
         if chunks.get(address):

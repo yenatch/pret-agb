@@ -15,31 +15,8 @@ def dump_maps(version):
 	return chunks.values()
 
 
-class BinFile(Chunk):
-	atomic = True
-	name = '.incbin'
-	def parse(self):
-		Chunk.parse(self)
-		address = self.address
-		address += self.length
-		self.value = self.rom[self.address:address]
-		self.last_address = address
-	@property
-	def asm(self):
-		return '"' + self.filename + '"'
-	def to_asm(self):
-		return '\t' + self.name + ' ' + self.asm
-	def create_file(self):
-		filename = self.filename
-		try:
-			os.makedirs(os.path.dirname(filename))
-		except OSError:
-			pass
-		with open(filename, 'wb') as out:
-			out.write(bytearray(self.value))
-
 class MapBorder(BinFile):
-	length = 4 * 2
+	size = 4 * 2
 class MapBorderPointer(Pointer):
 	target = MapBorder
 	include_address = False
@@ -47,7 +24,7 @@ class MapBorderPointer(Pointer):
 
 class MapBlockdata(BinFile):
 	@property
-	def length(self):
+	def size(self):
 		return self.width * self.height * 2
 class MapBlockdataPointer(Pointer):
 	target = MapBlockdata
@@ -363,11 +340,6 @@ class MapGroups(List):
             label.asm = label_name
             chunk.chunks += [label]
             chunk.label = label
-
-def create_files_of_chunks(chunks):
-	for chunk in chunks:
-		if hasattr(chunk, 'create_file'):
-			chunk.create_file()
 
 if __name__ == '__main__':
     from argparse import ArgumentParser as ap
