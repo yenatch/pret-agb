@@ -58,29 +58,7 @@ class EventScript(Script):
     def filter_macros(self):
         self.filter_msgbox()
         self.filter_switch()
-
-    def filter_msgbox(self):
-        """
-        The loadptr command usually (always?) points to a string, but not necessarily.
-        Eventually, this will replace loadptr/callstd combos with higher-level macros like msgbox.
-        """
-        loadptrs = []
-        for command in self.chunks:
-            name = getattr(command, 'name', None)
-            if name == 'loadptr':
-                if command.chunks[1].value == 0:
-                    loadptrs += [command]
-            elif name == 'callstd':
-                if command.chunks[1].value in (2, 3, 4, 5, 6, 9,):
-                    for loadptr in loadptrs:
-                        classes = list(loadptr.param_classes)
-                        classes[2] = TextPointer
-                        loadptr.param_classes = classes
-                        loadptr.parse()
-                    index = self.chunks.index
-                    #if len(loadptrs) == 1 and index(loadptrs[0]) == index(command) - 1:
-                    #    pass
-                    loadptrs = []
+        self.filter_giveitem()
 
     def filter_switch(self):
         copyvar = None
@@ -110,35 +88,89 @@ class EventScript(Script):
                             self.chunks.pop(index)
                             self.chunks.pop(index)
                             self.chunks.insert(index, macro)
-			    i -= 1
+                            i -= 1
                         except:
                             pass
             if name != 'compare':
                 compare = None
             i += 1
 
+    def filter_msgbox(self):
+        loadptr = None
+        i = 0
+        while i < len(self.chunks):
+            command = self.chunks[i]
+            name = getattr(command, 'name', None)
+            if name == 'loadptr':
+                loadptr = command
+            elif name == 'callstd':
+                if loadptr:
+                    macro = MsgBox(loadptr=loadptr, callstd=command)
+                    index = self.chunks.index(loadptr)
+                    self.chunks.pop(index)
+                    self.chunks.pop(index)
+                    self.chunks.insert(index, macro)
+                    i -= 1
+                loadptr = None
+            else:
+                loadptr = None
+            i += 1
+
+    def filter_giveitem(self):
+        item = None
+        amount = None
+        i = 0
+        while i < len(self.chunks):
+            command = self.chunks[i]
+            name = getattr(command, 'name', None)
+            if name == 'setorcopyvar':
+                if not item and command.params['destination'].value == 0x8000:
+                    item = command
+                    amount = None
+                elif command.params['destination'].value == 0x8001:
+                    amount = command
+            elif name == 'callstd':
+                if item and amount and command.params['function'].value in (0, 1):
+                    replace_class(item, 'source', Item)
+                    replace_class(amount, 'source', Amount)
+                    macro = GiveItem(copyitem=item, copyamount=amount, callstd=command)
+                    index = self.chunks.index(item)
+                    self.chunks.pop(index)
+                    self.chunks.pop(index)
+                    self.chunks.pop(index)
+                    self.chunks.insert(index, macro)
+                    i -= 2
+                elif item and (not amount) and command.params['function'].value == 7:
+                    replace_class(item, 'source', Decoration)
+                    macro = GiveDecoration(setorcopyvar=item, callstd=command)
+                    index = self.chunks.index(item)
+                    self.chunks.pop(index)
+                    self.chunks.pop(index)
+                    self.chunks.insert(index, macro)
+                    i -= 1
+                item = None
+                amount = None
+            else:
+                item = None
+                amount = None
+            i += 1
+
+def replace_class(chunk, name, class_):
+	classes = list(chunk.param_classes)
+	i = 0
+	for c in classes:
+		try:
+			if c[0] == name:
+				classes[i] = (name, class_)
+				chunk.param_classes = classes
+				chunk.parse()
+				break
+		except:
+			pass
+		i += 1
+
 class EventScriptPointer(Pointer):
     target = EventScript
-
-class Switch(Macro):
-    name = 'switch'
-    def parse(self):
-        self.address = self.chunks[0].address
-        self.last_address = self.chunks[-1].last_address
-    @property
-    def asm(self):
-        return self.chunks[0].params['source'].asm
-
-class SwitchCase(Macro):
-    name = 'case'
-    def parse(self):
-        self.chunks = [self.compare, self.jumpif]
-        self.address = self.chunks[0].address
-        self.last_address = self.chunks[-1].last_address
-    @property
-    def asm(self):
-        chunks = [self.compare.params['value'], self.jumpif.params['destination']]
-        return ', '.join(param.asm for param in chunks)
 
 
 class Pokemart(ParamGroup):
@@ -147,6 +179,11 @@ class Pokemart(ParamGroup):
 class PokemartPointer(Pointer):
     target = Pokemart
 
+class PokemartDecor(Pokemart):
+	param_classes = [DecorList, EventScript]
+
+class PokemartDecorPointer(PokemartPointer):
+	target = PokemartDecor
 
 class TrainerbattleArgs(ParamGroup):
 	param_classes = [('type', Byte), TrainerId, Word,]
@@ -266,7 +303,7 @@ event_commands = {
     },
     0x0f: { 'name': 'loadptr',
         'param_names': ['destination', 'value'],
-        'param_types': ['byte', 'long'],
+        'param_types': ['byte', TextPointer],
         'aliases': ['msgbox', 'loadpointer', 'loadptr'],
         'description': 'Sets the specified script bank to value.',
     },
@@ -332,7 +369,7 @@ event_commands = {
     },
     0x1a: { 'name': 'setorcopyvar',
         'param_names': ['destination', 'source'],
-        'param_types': [Variable, Variable],
+        'param_types': [Variable, WordOrVariable],
         'aliases': ['setorcopyvar', 'copyvarifnotzero'],
         'description': 'If source is not a variable, then this function acts like setvar. Otherwise, it acts like copyvar.',
     },
@@ -626,26 +663,26 @@ event_commands = {
         'description': "Checks for quantity amount of item index in the player's PC. Both arguments can be variables.",
     },
     0x4b: { 'name': 'adddecor',
-        'param_names': ['a'],
-        'param_types': ['word'],
+        'param_names': ['decoration'],
+        'param_types': [Decoration],
         'aliases': ['adddecor', 'adddecoration'],
         'description': 'In FireRed, this command is a nop. (The argument is read, but not used for anything.)',
     },
     0x4c: { 'name': 'removedecor',
-        'param_names': ['a'],
-        'param_types': ['word'],
+        'param_names': ['decoration'],
+        'param_types': [Decoration],
         'aliases': ['removedecoration', 'removedecor'],
         'description': 'In FireRed, this command is a nop. (The argument is read, but not used for anything.)',
     },
     0x4d: { 'name': 'testdecor',
-        'param_names': ['a'],
-        'param_types': ['word'],
+        'param_names': ['decoration'],
+        'param_types': [Decoration],
         'aliases': ['testdecoration', 'testdecor'],
         'description': 'In FireRed, this command is a nop. (The argument is read, but not used for anything.)',
     },
     0x4e: { 'name': 'checkdecor',
-        'param_names': ['a'],
-        'param_types': ['word'],
+        'param_names': ['decoration'],
+        'param_types': [Decoration],
         'aliases': ['checkdecor', 'checkdecoration'],
         'description': 'In FireRed, this command is a nop. (The argument is read, but not used for anything.)',
     },
@@ -936,8 +973,8 @@ event_commands = {
         'description': 'Writes the name of the item at index item to the specified buffer. If the specified index is larger than the number of items in the game (0x176), the name of item 0 ("????????") is buffered instead.',
     },
     0x81: { 'name': 'bufferdecor',
-        'param_names': ['a', 'b'],
-        'param_types': ['byte', 'word'],
+        'param_names': ['a', 'decoration'],
+        'param_types': ['byte', Decoration],
         'aliases': ['storedecoration', 'bufferdecoration', 'bufferdecor'],
         'description': 'In FireRed, this command is a nop. (The first argument is discarded immediately. The second argument is read, but not used for anything.)',
     },
@@ -973,7 +1010,7 @@ event_commands = {
     },
     0x87: { 'name': 'pokemartdecor',
         'param_names': ['products'],
-        'param_types': [PokemartPointer],
+        'param_types': [PokemartDecorPointer],
         'aliases': ['pokemartdecor', 'pokemart2'],
         'description': 'Apparent clone of pokemart.',
     },
@@ -1529,6 +1566,64 @@ class EventCommand_jumpif(event_command_classes['jumpif']):
             return super(EventCommand_jumpif, self).to_asm()
 event_command_classes[EventCommand_jumpif.id] = EventCommand_jumpif
 event_command_classes['jumpif'] = EventCommand_jumpif
+
+
+# EventScript macros
+
+class EventScriptMacro(Macro):
+	def parse(self):
+		self.address = self.chunks[0].address
+		self.last_address = self.chunks[-1].last_address
+	def _get_params(self):
+		pass
+	@property
+	def asm(self):
+		return ', '.join(param.asm for param in self._get_params())
+
+class Switch(EventScriptMacro):
+    name = 'switch'
+    def _get_params(self):
+        return [self.chunks[0].params['source']]
+
+class SwitchCase(EventScriptMacro):
+    name = 'case'
+    def parse(self):
+        self.chunks = [self.compare, self.jumpif]
+        EventScriptMacro.parse(self)
+    def _get_params(self):
+        return [self.compare.params['value'], self.jumpif.params['destination']]
+
+class MsgBox(EventScriptMacro):
+	name = 'msgbox'
+	def parse(self):
+		self.chunks = [self.loadptr, self.callstd]
+		EventScriptMacro.parse(self)
+	def _get_params(self):
+		return [self.loadptr.params['value'], self.callstd.params['function']]
+
+class GiveItem(EventScriptMacro):
+	name = 'giveitem'
+	def parse(self):
+		self.chunks = [self.copyitem, self.copyamount, self.callstd]
+		EventScriptMacro.parse(self)
+	def _get_params(self):
+		item = self.copyitem.params['source']
+		amount = self.copyamount.params['source']
+		function = self.callstd.params['function']
+		params = [item]
+		if amount.value != 1 or function.value != 0:
+			params += [amount]
+		if function.value != 0:
+			params += [function]
+		return params
+
+class GiveDecoration(EventScriptMacro):
+	name = 'givedecoration'
+	def parse(self):
+		self.chunks = [self.setorcopyvar, self.callstd]
+		EventScriptMacro.parse(self)
+	def _get_params(self):
+		return [self.setorcopyvar.params['source']]
 
 
 if __name__ == '__main__':

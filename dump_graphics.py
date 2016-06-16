@@ -7,7 +7,7 @@ class Graphic(BinFile):
 	def filename(self):
 		return 'graphics/unsorted/' + hex(self.address) + '.4bpp'
 
-class GraphicPointer(Pointer):
+class GraphicPointer(RomPointer):
 	target = Graphic
 	target_arg_names = ['size', 'filename']
 
@@ -57,7 +57,7 @@ class Palette(BinFile):
 	def filename(self):
 		return 'graphics/unsorted/' + hex(self.address) + '.pal'
 
-class PalPointer(Pointer):
+class PalPointer(RomPointer):
 	target = Palette
 	target_arg_names = ['size', 'filename']
 

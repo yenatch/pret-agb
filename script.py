@@ -111,7 +111,6 @@ class Pointer(Int):
     @property
     def real_address(self):
         if not is_rom_address(self.value) and not self.value == 0:
-            raise Exception('invalid pointer at 0x{:08x} (0x{:08x})'.format(self.address, self.value))
             return None
         return self.value & 0x1ffffff
     @property
@@ -121,7 +120,14 @@ class Pointer(Int):
             return label
         return '0x{:x}'.format(self.value)
 
-class ThumbPointer(Pointer):
+class RomPointer(Pointer):
+    @property
+    def real_address(self):
+        if not is_rom_address(self.value) and not self.value == 0:
+            raise Exception('invalid pointer at 0x{:08x} (0x{:08x})'.format(self.address, self.value))
+        return self.value & 0x1ffffff
+
+class ThumbPointer(RomPointer):
     def get_label(self):
         return Pointer.get_label(self) or self.version['labels'].get(self.value - 1)
 
@@ -168,30 +174,38 @@ class WordOrVariable(Word):
             return Variable.asm.fget(self)
         return str(self.value)
 
-class Species(Word):
+class Species(WordOrVariable):
     @property
     def asm(self):
-        return self.version.get('pokemon_constants', {}).get(self.value, str(self.value))
+        return self.version.get('pokemon_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
-class Item(Word):
+class Item(WordOrVariable):
     @property
     def asm(self):
         return self.version.get('item_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
+class Decoration(WordOrVariable):
+	@property
+	def asm(self):
+		return self.version.get('decoration_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+
+class Amount(Word):
+	pass
+
 class BFItem(Item):
 	@property
 	def asm(self):
-		return self.version.get('battle_frontier_item_constants', {}).get(self.value, str(self.value))
+		return self.version.get('battle_frontier_item_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
-class TrainerId(Word):
+class TrainerId(WordOrVariable):
 	@property
 	def asm(self):
-		return self.version.get('trainer_constants', {}).get(self.value, str(self.value))
+		return self.version.get('trainer_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
-class FieldGFXId(Word):
+class FieldGFXId(WordOrVariable):
 	@property
 	def asm(self):
-		return self.version.get('field_gfx_constants', {}).get(self.value, str(self.value))
+		return self.version.get('field_gfx_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
 
 class Macro(ParamGroup):
     atomic = True
@@ -296,6 +310,9 @@ class ItemList(List):
 		while self.chunks[-1].value != 0:
 			self.count += 1
 			List.parse(self)
+
+class DecorList(ItemList):
+	param_classes = [Decoration]
 
 class BinFile(Chunk):
 	atomic = True
