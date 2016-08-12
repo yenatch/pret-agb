@@ -29,7 +29,9 @@ class EventScript(Script):
         There are some malformed scripts that need to be manually ended.
         This function rewinds a script if it passes through an address in force_stop_addresses.
         """
-        force_stop_addresses = self.version['force_stop_addresses']
+        force_stop_addresses = self.version.get('force_stop_addresses')
+        if not force_stop_addresses:
+            return
         for i, chunk in enumerate(self.chunks):
             if chunk.last_address in force_stop_addresses:
                 self.chunks = self.chunks[:i+1]
@@ -169,6 +171,45 @@ def replace_class(chunk, name, class_):
 			pass
 		i += 1
 
+#	def filter_msgbox(self):
+#		loadptr = None
+#		chunks = IterChunks(self.chunks)
+#		for command in chunks:
+#			name = getattr(command, 'name', None)
+#			if name == 'loadptr':
+#				loadptr = command
+#			elif name == 'callstd':
+#				if loadptr:
+#					macro = MsgBox(loadptr=loadptr, callstd=command)
+#					chunks.replace(loadptr, macro)
+#					chunks.remove(callstd)
+#				loadptr = None
+#			else:
+#				loadptr = None
+
+#class IterChunks:
+#	def init(self, chunks):
+#		self.chunks = chunks
+#		self.index = -1
+#	def __iter__(self):
+#		return self
+#	def next(self):
+#		self.index += 1
+#		try:
+#			chunk = self.chunks[self.index]
+#		except:
+#			raise StopIteration
+#		return chunk
+#	def replace(self, target, replacement):
+#		index = self.chunks.index(target)
+#		self.chunks.pop(index)
+#		self.chunks.insert(index, replacement)
+#	def remove(self, target):
+#		index = self.chunks.index(target)
+#		self.chunks.pop(index)
+#		if self.index > index:
+#			self.index -= 1
+
 class EventScriptPointer(Pointer):
     target = EventScript
 
@@ -206,28 +247,20 @@ class TrainerbattleArgs(ParamGroup):
 
 event_commands = {
     0x00: { 'name': 'snop',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['nop0', 'nop'],
         'description': 'Does nothing.',
     },
     0x01: { 'name': 'snop1',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['nop1'],
         'description': 'Does nothing.',
     },
     0x02: { 'name': 'end',
-        'param_types': [],
         'end': True,
         'description': 'Terminates script execution.',
-        'param_names': [],
         'aliases': ['end'],
     },
     0x03: { 'name': 'return',
         'end': True,
-        'param_names': [],
-        'param_types': [],
         'aliases': ['return'],
         'description': 'Jumps back to after the last-executed call statement, and continues script execution from there.',
     },
@@ -282,17 +315,13 @@ event_commands = {
         'description': 'If the result of the last comparison matches condition (see Comparison operators), calls the standard function at index function.',
     },
     0x0c: { 'name': 'jumpram',
-        'param_types': [],
         'end': True,
         'description': 'Executes a script stored in a default RAM location.',
-        'param_names': [],
         'aliases': ['jumpram', 'gotoram'],
     },
     0x0d: { 'name': 'die',
-        'param_types': [],
         'end': True,
         'description': 'Terminates script execution and "resets the script RAM".',
-        'param_names': [],
         'aliases': ['die', 'killscript'],
     },
     0x0e: { 'name': 'setbyte',
@@ -447,8 +476,6 @@ event_commands = {
         'description': "Calls a special function. That function's output (if any) will be written to the variable you specify.",
     },
     0x27: { 'name': 'waitstate',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['waitstate'],
         'description': 'Blocks script execution until a command or ASM code manually unblocks it. Generally used with specific commands and specials. If this command runs, and a subsequent command or piece of ASM does not unblock state, the script will remain blocked indefinitely (essentially a hang).',
     },
@@ -477,20 +504,14 @@ event_commands = {
         'description': 'Compares a to 1.',
     },
     0x2c: { 'name': 'compareflags',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['cmd2c', 'compareflags'],
         'description': 'In FireRed, this command is a nop.',
     },
     0x2d: { 'name': 'checkdailyflags',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['checkdailyflags'],
         'description': 'In FireRed, this command is a nop.',
     },
     0x2e: { 'name': 'resetvars',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['resetvars'],
         'description': 'Resets the values of variables 0x8000, 0x8001, and 0x8002. Related to RTC in RSE?',
     },
@@ -501,8 +522,6 @@ event_commands = {
         'description': 'Plays the specified (sound_number) sound. Only one sound may play at a time, with newer ones interrupting older ones.',
     },
     0x30: { 'name': 'checksound',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['checksound'],
         'description': 'Blocks script execution until the currently-playing sound (triggered by sound) finishes playing.',
     },
@@ -513,8 +532,6 @@ event_commands = {
         'description': 'Plays the specified (fanfare_number) fanfare.',
     },
     0x32: { 'name': 'waitfanfare',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['waitfanfare'],
         'description': 'Blocks script execution until all currently-playing fanfares finish.',
     },
@@ -531,8 +548,6 @@ event_commands = {
         'description': 'Plays the specified (song_number) song.',
     },
     0x35: { 'name': 'fadedefault',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['fadedefault'],
         'description': "Crossfades the currently-playing song into the map's default song.",
     },
@@ -615,10 +630,8 @@ event_commands = {
         'description': "Retrieves the player's zero-indexed X- and Y-coordinates in the map, and stores them in the specified variables.",
     },
     0x43: { 'name': 'countpokemon',
-        'param_names': [],
-        'param_types': [],
-        'aliases': ['countpokemon', 'countPokmon'],
-        'description': "Retrieves the number of Pokmon in the player's party, and stores that number in variable 0x800D (LASTRESULT).",
+        'aliases': ['countpokemon', 'countPokemon'],
+        'description': "Retrieves the number of Pokemon in the player's party, and stores that number in variable 0x800D (LASTRESULT).",
     },
     0x44: { 'name': 'additem',
         'param_names': ['index', 'quantity'],
@@ -748,8 +761,6 @@ event_commands = {
         'aliases': ['spriteinvisible'],
     },
     0x5a: { 'name': 'faceplayer',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['spriteface', 'faceplayer'],
         'description': 'If the script was called by a Person event, then that Person will turn to face toward the tile that the player is stepping off of.',
     },
@@ -767,19 +778,13 @@ event_commands = {
         'description': 'If the Trainer flag for Trainer index is not set, this command does absolutely nothing.',
     },
     0x5d: { 'name': 'reptrainerbattle',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['repeattrainerbattle', 'reptrainerbattle'],
         'description': 'Starts a trainer battle using the battle information stored in RAM (usually by trainerbattle, which actually calls this command behind-the-scenes), and blocks script execution until the battle finishes.',
     },
     0x5e: { 'name': 'endtrainerbattle',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['endtrainerbattle'],
     },
     0x5f: { 'name': 'endtrainerbattle2',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['endtrainerbattle2'],
     },
     0x60: { 'name': 'checktrainerflag',
@@ -816,8 +821,6 @@ event_commands = {
         'aliases': ['spritebehave'],
     },
     0x66: { 'name': 'waittext',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['showmsg', 'waittext', 'waitmsg'],
         'description': 'If a standard message box (or its text) is being drawn on-screen, this command blocks script execution until the box and its text have been fully drawn.',
     },
@@ -828,38 +831,26 @@ event_commands = {
         'description': 'Starts displaying a standard message box containing the specified text. If text is a pointer, then the string at that offset will be loaded and used. If text is script bank 0, then the value of script bank 0 will be treated as a pointer to the text. (You can use loadpointer to place a string pointer in a script bank.)',
     },
     0x68: { 'name': 'closebutton',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['closebutton', 'closeonkeypress', 'closemsg'],
         'description': 'Holds the current message box open until the player presses a key. The message box is then closed.',
     },
     0x69: { 'name': 'lockall',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['lockall'],
         'description': 'Ceases movement for all OWs on-screen.',
     },
     0x6a: { 'name': 'lock',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['lock'],
         'description': "If the script was called by a Person event, then that Person's movement will cease.",
     },
     0x6b: { 'name': 'releaseall',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['releaseall'],
         'description': 'Resumes normal movement for all OWs on-screen, and closes any standard message boxes that are still open.',
     },
     0x6c: { 'name': 'release',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['release'],
         'description': "If the script was called by a Person event, then that Person's movement will resume. This command also closes any standard message boxes that are still open.",
     },
     0x6d: { 'name': 'waitbutton',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['waitkeypress', 'waitbutton'],
         'description': 'Blocks script execution until the player presses any key.',
     },
@@ -906,11 +897,9 @@ event_commands = {
         'param_names': ['species', 'X', 'Y'],
         'param_types': [Species, 'byte', 'byte'],
         'aliases': ['showpokepic'],
-        'description': 'Displays a box containing the front sprite for the specified (species) Pokmon species.',
+        'description': 'Displays a box containing the front sprite for the specified (species) Pokemon species.',
     },
     0x76: { 'name': 'hidepokepic',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['hidepokepic'],
         'description': 'Hides all boxes displayed with showpokepic.',
     },
@@ -929,8 +918,8 @@ event_commands = {
     0x79: { 'name': 'givepokemon',
         'param_names': ['species', 'level', 'item', 'unknown1', 'unknown2', 'unknown3'],
         'param_types': [Species, 'byte', Item, 'long', 'long', 'byte'],
-        'aliases': ['givePokmon', 'givepokemon'],
-        'description': 'Gives the player one of the specified (species) Pokmon at level level holding item. The unknown arguments should all be zeroes.',
+        'aliases': ['givePokemon', 'givepokemon'],
+        'description': 'Gives the player one of the specified (species) Pokemon at level level holding item. The unknown arguments should all be zeroes.',
     },
     0x7a: { 'name': 'giveegg',
         'param_names': ['word'],
@@ -944,27 +933,27 @@ event_commands = {
     },
     0x7c: { 'name': 'checkattack',
         'param_names': ['index'],
-        'param_types': ['word'],
+        'param_types': [Move],
         'aliases': ['checkattack'],
-        'description': "Checks if at least one Pokmon in the player's party knows the specified (index) attack. If so, variable 0x800D (LASTRESULT) is set to the (zero-indexed) slot number of the Pokmon that knows the move. If not, LASTRESULT is set to 0x0006.",
+        'description': "Checks if at least one Pokemon in the player's party knows the specified (index) attack. If so, variable 0x800D (LASTRESULT) is set to the (zero-indexed) slot number of the Pokemon that knows the move. If not, LASTRESULT is set to 0x0006.",
     },
     0x7d: { 'name': 'bufferpoke',
         'param_names': ['out', 'species'],
         'param_types': ['byte', Species],
-        'aliases': ['bufferpokemon', 'storepokemon', 'bufferPokmon', 'bufferpoke'],
-        'description': 'Writes the name of the Pokmon at index species to the specified buffer.',
+        'aliases': ['bufferpokemon', 'storepokemon', 'bufferPokemon', 'bufferpoke'],
+        'description': 'Writes the name of the Pokemon at index species to the specified buffer.',
     },
     0x7e: { 'name': 'bufferfirstpoke',
         'param_names': ['out'],
         'param_types': ['byte'],
-        'aliases': ['bufferfirstpoke', 'bufferfirstpokemon', 'storefirstpokemon', 'bufferfirstPokmon'],
-        'description': "Writes the name of the first Pokmon in the player's party to the specified buffer.",
+        'aliases': ['bufferfirstpoke', 'bufferfirstpokemon', 'storefirstpokemon', 'bufferfirstPokemon'],
+        'description': "Writes the name of the first Pokemon in the player's party to the specified buffer.",
     },
     0x7f: { 'name': 'bufferpartypoke',
         'param_names': ['out', 'slot'],
         'param_types': ['byte', 'word'],
-        'aliases': ['storepartypokemon', 'bufferpartypokemon', 'bufferpartypoke', 'bufferpartyPokmon'],
-        'description': 'Writes the name of the Pokmon in slot slot (zero-indexed) of the player\'s party to the specified buffer. If an empty or invalid slot is specified, ten spaces ("") are written to the buffer.',
+        'aliases': ['storepartypokemon', 'bufferpartypokemon', 'bufferpartypoke', 'bufferpartyPokemon'],
+        'description': 'Writes the name of the Pokemon in slot slot (zero-indexed) of the player\'s party to the specified buffer. If an empty or invalid slot is specified, ten spaces ("") are written to the buffer.',
     },
     0x80: { 'name': 'bufferitem',
         'param_names': ['out', 'item'],
@@ -980,7 +969,7 @@ event_commands = {
     },
     0x82: { 'name': 'bufferattack',
         'param_names': ['out', 'attack'],
-        'param_types': ['byte', 'word'],
+        'param_types': ['byte', Move],
         'aliases': ['storeattack', 'bufferattack'],
         'description': 'Writes the name of the attack at index attack to the specified buffer.',
     },
@@ -1026,32 +1015,24 @@ event_commands = {
         'aliases': ['pokecasino'],
     },
     0x8a: { 'name': 'event_8a',
-        'param_names': [],
-        'param_types': [],
+        'param_names': ['byte1', 'byte2', 'byte3'],
+        'param_types': [Byte, Byte, Byte],
         'aliases': ['cmd8a'],
         'description': 'In FireRed, this command is a nop.',
     },
     0x8b: { 'name': 'choosecontestpkmn',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['choosecontestpkmn'],
         'description': 'In FireRed, this command sets the byte at 0x03000EA8 to 0x01. I do not know what that means.',
     },
     0x8c: { 'name': 'startcontest',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['startcontest'],
         'description': 'In FireRed, this command is a nop.',
     },
     0x8d: { 'name': 'showcontestresults',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['showcontestresults'],
         'description': 'In FireRed, this command is a nop.',
     },
     0x8e: { 'name': 'contestlinktransfer',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['contestlinktransfer'],
         'description': 'In FireRed, this command is a nop.',
     },
@@ -1137,9 +1118,9 @@ event_commands = {
     },
     0x9d: { 'name': 'setanimation',
         'param_names': ['animation', 'slot'],
-        'param_types': ['byte', 'word'],
+        'param_types': ['byte', WordOrVariable],
         'aliases': ['setanimation'],
-        'description': 'Tells the game which party Pokmon to use for the next field move animation.',
+        'description': 'Tells the game which party Pokemon to use for the next field move animation.',
     },
     0x9e: { 'name': 'checkanimation',
         'param_names': ['animation'],
@@ -1151,11 +1132,9 @@ event_commands = {
         'param_names': ['flightspot'],
         'param_types': ['word'],
         'aliases': ['sethealplace', 'sethealingplace'],
-        'description': 'Sets which healing place the player will return to if all of the Pokmon in their party faint. A list of available healing places can be found on PokeCommunity.',
+        'description': 'Sets which healing place the player will return to if all of the Pokemon in their party faint. A list of available healing places can be found on PokeCommunity.',
     },
     0xa0: { 'name': 'checkgender',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['checkgender'],
         'description': "Checks the player's gender. If male, then 0x0000 is stored in variable 0x800D (LASTRESULT). If female, then 0x0001 is stored in LASTRESULT.",
     },
@@ -1163,7 +1142,7 @@ event_commands = {
         'param_names': ['species', 'effect'],
         'param_types': [Species, 'word'],
         'aliases': ['cry', 'pokecry'],
-        'description': "Plays the specified (species) Pokmon's cry. You can use waitcry to block script execution until the sound finishes.",
+        'description': "Plays the specified (species) Pokemon's cry. You can use waitcry to block script execution until the sound finishes.",
     },
     0xa2: { 'name': 'setmaptile',
         'param_names': ['X', 'Y', 'tile_number', 'tile_attrib'],
@@ -1172,8 +1151,6 @@ event_commands = {
         'description': 'Changes the tile at (X, Y) on the current map.',
     },
     0xa3: { 'name': 'resetweather',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['resetweather'],
         'description': 'Queues a weather change to the default weather for the map.',
     },
@@ -1184,8 +1161,6 @@ event_commands = {
         'description': 'Queues a weather change to type weather.',
     },
     0xa5: { 'name': 'doweather',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['doweather'],
         'description': 'Executes the weather change queued with resetweather or setweather. The current weather will smoothly fade into the queued weather.',
     },
@@ -1233,8 +1208,6 @@ event_commands = {
         'description': 'Queues the closing of the door tile at (X, Y) with an animation.',
     },
     0xae: { 'name': 'doorchange',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['doorchange'],
         'description': 'Executes the state changes queued with setdooropened, setdoorclosed, setdooropened2, and setdoorclosed2.',
     },
@@ -1251,14 +1224,10 @@ event_commands = {
         'description': 'Queues the closing of the door tile at (X, Y) without an animation.',
     },
     0xb1: { 'name': 'event_b1',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['cmdb1'],
         'description': 'In FireRed, this command is a nop.',
     },
     0xb2: { 'name': 'event_b2',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['cmdb2'],
         'description': 'In FireRed, this command is a nop.',
     },
@@ -1284,10 +1253,8 @@ event_commands = {
         'description': 'Prepares to start a wild battle against a species at Level level holding item. Running this command will not affect normal wild battles. You start the prepared battle with dowildbattle.',
     },
     0xb7: { 'name': 'dowildbattle',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['dowildbattle'],
-        'description': 'Starts a wild battle against the Pokmon generated by setwildbattle. Blocks script execution until the battle finishes.',
+        'description': 'Starts a wild battle against the Pokemon generated by setwildbattle. Blocks script execution until the battle finishes.',
     },
     0xb8: { 'name': 'setvaddress',
         'param_names': ['long', 'word'],
@@ -1361,8 +1328,6 @@ event_commands = {
         'description': "Clone of warp... Except that it doesn't appear to have any effect when used in some of FireRed's default level scripts. (If it did, Berry Forest would be impossible to enter...)",
     },
     0xc5: { 'name': 'waitpokecry',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['waitcry', 'waitpokecry'],
         'description': 'Blocks script execution until cry finishes.',
     },
@@ -1385,20 +1350,14 @@ event_commands = {
         'description': 'The exact purpose of this command is unknown, but it is related to the blue help-text box that appears on the bottom of the screen when the Main Menu is opened.',
     },
     0xc9: { 'name': 'unloadhelp',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['cmdc9'],
         'description': 'The exact purpose of this command is unknown, but it is related to the blue help-text box that appears on the bottom of the screen when the Main Menu is opened.',
     },
     0xca: { 'name': 'signmsg',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['signmsg'],
         'description': 'After using this command, all standard message boxes will use the signpost frame.',
     },
     0xcb: { 'name': 'normalmsg',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['normalmsg'],
         'description': 'Ends the effects of signmsg, returning message box frames to normal.',
     },
@@ -1412,19 +1371,17 @@ event_commands = {
         'param_names': ['slot'],
         'param_types': ['word'],
         'aliases': ['setobedience'],
-        'description': "Makes the Pokmon in the specified slot of the player's party obedient. It will not randomly disobey orders in battle.",
+        'description': "Makes the Pokemon in the specified slot of the player's party obedient. It will not randomly disobey orders in battle.",
     },
     0xce: { 'name': 'checkobedience',
         'param_names': ['slot'],
         'param_types': ['word'],
         'aliases': ['checkobedience'],
-        'description': "Checks if the Pokmon in the specified slot of the player's party is obedient. If the Pokmon is disobedient, 0x0001 is written to script variable 0x800D (LASTRESULT). If the Pokmon is obedient (or if the specified slot is empty or invalid), 0x0000 is written.",
+        'description': "Checks if the Pokemon in the specified slot of the player's party is obedient. If the Pokemon is disobedient, 0x0001 is written to script variable 0x800D (LASTRESULT). If the Pokemon is obedient (or if the specified slot is empty or invalid), 0x0000 is written.",
     },
     0xcf: { 'name': 'execram',
-        'param_types': [],
         'end': True,
         'description': "Depending on factors I haven't managed to understand yet, this command may cause script execution to jump to the offset specified by the pointer at 0x020370A4.",
-        'param_names': [],
         'aliases': ['execram', 'executeram'],
     },
     0xd0: { 'name': 'setworldflag',
@@ -1443,7 +1400,7 @@ event_commands = {
         'param_names': ['slot', 'location'],
         'param_types': ['word', 'byte'],
         'aliases': ['setcatchlocation', 'setcatchlocale'],
-        'description': 'Changes the location where the player caught the Pokmon in the specified slot of their party. A list of valid catch locations can be found on PokeCommunity.',
+        'description': 'Changes the location where the player caught the Pokemon in the specified slot of their party. A list of valid catch locations can be found on PokeCommunity.',
     },
     0xd3: { 'name': 'event_d3',
         'param_names': ['unknown'],
@@ -1452,8 +1409,6 @@ event_commands = {
         #'description': 'Sets variable 0x8004 to a value based on the width of the braille string at text.',
     },
     0xd4: { 'name': 'event_d4',
-        'param_names': [],
-        'param_types': [],
         'aliases': [],
     },
     0xd5: { 'name': 'event_d5',
@@ -1463,8 +1418,6 @@ event_commands = {
         'description': 'In FireRed, this command is a nop.',
     },
     0xd6: { 'name': 'event_d6',
-        'param_names': [],
-        'param_types': [],
         'aliases': [],
     },
     0xd7: { 'name': 'warp7',
@@ -1473,18 +1426,12 @@ event_commands = {
         'aliases': ['warp7'],
     },
     0xd8: { 'name': 'event_d8',
-        'param_names': [],
-        'param_types': [],
         'aliases': [],
     },
     0xd9: { 'name': 'event_d9',
-        'param_names': [],
-        'param_types': [],
         'aliases': [],
     },
     0xda: { 'name': 'hidebox2',
-        'param_names': [],
-        'param_types': [],
         'aliases': ['hidebox2'],
     },
     0xdb: { 'name': 'message3',
@@ -1540,21 +1487,24 @@ def get_param_class(param_type):
         }.get(param_type)
     return param_type
 
-def make_command_classes(commands):
+def make_command_class(byte, command, class_name):
+    attributes = {}
+    attributes.update(command)
+    attributes['id'] = byte
+    param_names = command.get('param_names', list())
+    param_types = command.get('param_types', list())
+    attributes['param_classes'] = [Byte] + zip(param_names, map(get_param_class, param_types))
+    return classobj(class_name, (Command,), attributes)
+
+def make_command_classes(commands, class_name_base=''):
     classes = {}
     for byte, command in commands.items():
-        class_name = 'EventCommand_' + command['name']
-
-        attributes = {}
-        attributes.update(command)
-        attributes['id'] = byte
-        attributes['param_classes'] = [Byte] + zip(command['param_names'], map(get_param_class, command['param_types']))
-
-        classes[byte] = classobj(class_name, (Command,), attributes)
+        class_name = class_name_base + command['name']
+        classes[byte] = make_command_class(byte, command, class_name)
         classes[command['name']] = classes[byte]
     return classes
 
-event_command_classes = make_command_classes(event_commands)
+event_command_classes = make_command_classes(event_commands, 'EventCommand_')
 
 
 # Extend jumpif
@@ -1624,6 +1574,31 @@ class GiveDecoration(EventScriptMacro):
 		EventScriptMacro.parse(self)
 	def _get_params(self):
 		return [self.setorcopyvar.params['source']]
+
+#class GiveItemFanfare(EventScriptMacro):
+#	name = 'giveitem'
+#	def parse(self):
+#		self.chunks = [self.copyitem, self.copyamount, self.copyse, self.callstd]
+#		EventScriptMacro.parse(self)
+#	def _get_params(self):
+#		return [self.copyitem.params['source'], self.copyamount.params['source'], self.copyse.params['source']]
+
+#class WildBattle(EventScriptMacro):
+#	name = 'wildbattle'
+#	def parse(self):
+#		self.chunks = [self.setwildbattle, self.dowildbattle]
+#		EventScriptMacro.parse(self)
+#	def _get_params(self):
+#		params = self.setwildbattle.params
+#		return [params['species'], params['level'], params['item']]
+
+#class AddPokenav(EventScriptMacro):
+#	name = 'addpokenav'
+#	def parse(self):
+#		self.chunks = [self.copyvarifnotzero, self.callstd]
+#		EventScriptMacro.parse(self)
+#	def _get_params(self):
+#		return [self.copyvarifnotzero['source']]
 
 
 if __name__ == '__main__':

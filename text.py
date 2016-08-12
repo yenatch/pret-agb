@@ -32,6 +32,14 @@ class TextPointer(Pointer):
     target = Text
 
 
+class JPString(String):
+	@property
+	def asm(self):
+		return '"' + charmap.decode(self.bytes, self.version['charmap_jp']) + '"'
+
+class JPText(Text):
+	param_classes = [JPString]
+
 alphabet = map(chr, xrange(ord('A'), ord('Z')+1))
 
 class BrailleString(String):
@@ -55,3 +63,28 @@ class Braille(ParamGroup):
 
 class BraillePointer(Pointer):
     target = Braille
+
+
+def main():
+	import argparse
+	ap = argparse.ArgumentParser()
+	ap.add_argument('address')
+	ap.add_argument('version', nargs='?', default='ruby')
+	args = ap.parse_args()
+
+	import versions
+	version = versions.__dict__[args.version]
+	setup_version(version)
+	chunks = recursive_parse(
+		Text,
+		int(args.address, 16),
+		version=version,
+		rom=version['baserom']
+	)
+
+	chunks = flatten_nested_chunks(chunks.values())
+	for path in version['maps_paths']:
+		insert_chunks(chunks, path, version)
+
+if __name__ == '__main__':
+	main()

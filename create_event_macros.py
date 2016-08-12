@@ -250,9 +250,9 @@ def make_event_macro(byte, cmd, enum=False):
 	text = ''
 
 	name = cmd['name']
-	param_types = cmd['param_types']
-	param_names = cmd['param_names']
-	aliases = cmd['aliases']
+	param_types = cmd.get('param_types', [])
+	param_names = cmd.get('param_names', [])
+	aliases = cmd.get('aliases', [])
 
 	args = ', '.join(param_names)
 	arg_behavior = []

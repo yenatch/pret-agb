@@ -13,8 +13,9 @@ def find_labels(path):
 			labels.update(find_labels(incpath))
 		elif ': @' in line:
 			i = line.find(':')
+			j = line.find('@', i) + 1
 			try:
-				label, address = line[:i], int(line[i+3:].split()[0], 16)
+				label, address = line[:i], int(line[j:].split()[0], 16)
 				labels[address] = label
 			except:
 				pass
@@ -72,6 +73,17 @@ def read_constants(path):
 				pass
 			else:
 				variables[name.strip()] = int(value, 0)
+
+		elif line.startswith('enum_start'):
+			try:
+				enum = int(line.split('enum_start')[1], 0)
+			except ValueError:
+				enum = 0
+		elif line.startswith('enum'):
+			name = line.split('enum')[1].strip()
+			variables[name] = enum
+			enum += 1
+
 	return variables
 
 def reverse_constants(variables):
@@ -95,6 +107,11 @@ def setup_version(version):
 			and not k.startswith('TRAINER_CLASS_NAME_')
 			and not k.startswith('TRAINER_ENCOUNTER_MUSIC_')
 		},
+		'move_constants': read_reverse_constants('constants/move_constants.s'),
+		'battle_text_constants': read_reverse_constants('constants/battle_text.s'),
+		'ability_constants': read_reverse_constants('constants/ability_constants.s'),
+		'type_constants': read_reverse_constants('constants/type_constants.s'),
+		'move_effect_constants': read_reverse_constants('constants/move_effects.s'),
 	})
 
 	version['labels'] = {}
