@@ -65,26 +65,14 @@ class BraillePointer(Pointer):
     target = Braille
 
 
-def main():
-	import argparse
-	ap = argparse.ArgumentParser()
-	ap.add_argument('address')
-	ap.add_argument('version', nargs='?', default='ruby')
-	args = ap.parse_args()
-
-	import versions
-	version = versions.__dict__[args.version]
-	setup_version(version)
-	chunks = recursive_parse(
-		Text,
-		int(args.address, 16),
-		version=version,
-		rom=version['baserom']
+if __name__ == '__main__':
+	args = get_args(
+		'address',
+		('version', {'nargs': '?', 'default': 'ruby'})
 	)
 
-	chunks = flatten_nested_chunks(chunks.values())
-	for path in version['maps_paths']:
-		insert_chunks(chunks, path, version)
-
-if __name__ == '__main__':
-	main()
+	insert_recursive(
+		Text,
+		int(args.address, 16),
+		args.version,
+	)

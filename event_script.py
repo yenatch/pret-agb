@@ -1602,17 +1602,13 @@ class GiveDecoration(EventScriptMacro):
 
 
 if __name__ == '__main__':
-    import argparse
-    ap = argparse.ArgumentParser()
-    ap.add_argument('address')
-    args = ap.parse_args()
+    args = get_args(
+        'address',
+	('version', {'nargs': '?', 'default': 'ruby'}),
+    )
 
-    import versions
-    version = versions.ruby
-    setup_version(version)
     print print_recursive(
         EventScript,
         int(args.address, 16),
-        version=version,
-        rom=version['baserom']
+        args.version
     )

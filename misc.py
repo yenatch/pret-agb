@@ -1,7 +1,11 @@
+"""This is where one-off dumps go to die.
+"""
+
 from script import *
 from event_script import *
 from dump_maps import *
 from battle_script import *
+
 
 class Specials(List):
 	param_classes = [ThumbPointer]
@@ -78,6 +82,17 @@ def insert_labels(labels):
 
 
 if __name__ == '__main__':
-	import sys
-	address = int(sys.argv[1], 16)
-	print just_do_it(Text, address)
+    args = get_args(
+        'classname',
+        'address',
+	('version', {'nargs':'?', 'default':'ruby'}),
+	('-i', {'dest': 'insert', 'action': 'store_true'}),
+    )
+    class_ = globals()[args.classname]
+    address = int(args.address, 16)
+    version = args.version
+
+    if args.insert:
+        insert_recursive(class_, address, version)
+    else:
+        print print_recursive(class_, address, version)

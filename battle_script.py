@@ -1165,7 +1165,7 @@ def print_battle_script_macros():
 
 if __name__ == '__main__':
 	args = get_args([
-		('address', {
+		('addresses', {
 			'nargs': '*',
 		}),
 		('-i', {
@@ -1179,10 +1179,10 @@ if __name__ == '__main__':
 	if args.macros:
 		print_battle_script_macros()
 	elif args.insert:
-		for address in args.address:
+		for address in args.addresses:
 			address = int(address, 16)
-			insert_recursive(BattleScript, address, paths=['data/data1.s'])
+			insert_recursive(BattleScript, address)
 	else:
-		for address in args.address:
+		for address in args.addresses:
 			address = int(address, 16)
-			print just_do_it(BattleScript, address, 'ruby')
+			print print_recursive(BattleScript, address, 'ruby')

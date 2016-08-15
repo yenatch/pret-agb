@@ -115,16 +115,16 @@ def dump_graphics(filename, version):
 				continue
 			try:
 				chunks_ = recursive_parse(
-					ObjTilesList,
+					ObjTilesList.extend(count=count),
 					start,
-					count=count,
 					version=version,
-					rom=version['baserom']
 				)
 			except:
 				continue
 			chunks += chunks_.values()
 	chunks = flatten_nested_chunks(chunks)
+
+	# version.ruby is intentional. i think.
 	for path in version['maps_paths']:
 		insert_chunks(chunks, path, versions.ruby)
 	if filename not in version['maps_paths']:

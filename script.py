@@ -24,6 +24,9 @@ class Object(object):
     arg_names = []
     rom = None
     version = None
+    class __metaclass__(type):
+        def extend(cls, **kwargs):
+            return classobj(cls.__name__, (cls,), kwargs)
     def __init__(self, *args, **kwargs):
         map(self.__dict__.__setitem__, self.arg_names, args)
         self.__dict__.update(kwargs)
@@ -588,30 +591,33 @@ def flatten_nested_chunks(*args):
 def print_nested_chunks(*args):
     return print_chunks(flatten_nested_chunks(*args))
 
-def print_recursive(class_, address, *args, **kwargs):
-    return print_nested_chunks(recursive_parse(class_, address, *args, **kwargs).values())
-
-def just_do_it(class_, address, version='ruby'):
-    version = get_setup_version(version)
-    return print_recursive(class_, address, version=version, rom=version['baserom'])
-
-def get_setup_version(version='ruby'):
-    version = versions.__dict__[version]
+def get_setup_version(version_name='ruby'):
+    version = versions.__dict__[version_name]
     setup_version(version)
     return version
 
-def insert_recursive(class_, address, version='ruby', paths=None):
-    version = get_setup_version(version)
+def get_recursive(class_, address, version_name='ruby', version=None):
+    if version is None:
+        version = get_setup_version(version_name)
     chunks = flatten_nested_chunks(recursive_parse(class_, address, version=version, rom=version['baserom']).values())
+    return chunks
+
+def print_recursive(*args, **kwargs):
+    return print_chunks(get_recursive(*args, **kwargs))
+
+def insert_recursive(class_, address, version_name='ruby', paths=None, version=None):
+    chunks = get_recursive(class_, address, version_name)
+    if version is None:
+        version = get_setup_version(version_name)
     if paths is None:
-	    paths = version['maps_paths']
+        paths = version['maps_paths']
     for path in paths:
         insert_chunks(chunks, path, version)
 
-def get_args(defs):
+def get_args(*args):
     import argparse
     ap = argparse.ArgumentParser()
-    for arg in defs:
+    for arg in args:
         try:
             name, kw = arg
         except:
@@ -620,13 +626,13 @@ def get_args(defs):
     return ap.parse_args()
 
 def main():
-    args = get_args([
-        ('classname'),
-        ('address'),
+    args = get_args(
+        'classname',
+        'address',
 	('version', {'nargs':'?', 'default':'ruby'}),
-    ])
-    class_ = locals()[args.classname]
+    )
+    class_ = globals()[args.classname]
     address = int(args.address, 16)
     version = args.version
 
-    print just_do_it(class_, address, version)
+    print print_recursive(class_, address, version)
