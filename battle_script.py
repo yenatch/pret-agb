@@ -21,21 +21,16 @@ class UnboundedList(List):
 			self.count += 1
 			try:
 				self.parse_item()
-			except Exception as e:
+			except:
 				self.count -= 1
 				break
 		List.parse(self)
 
-
 class Ability(Byte):
-	@property
-	def asm(self):
-		return self.version.get('ability_constants', {}).get(self.value, Byte.asm.fget(self))
+	constants = 'ability_constants'
 
 class Type(Byte):
-	@property
-	def asm(self):
-		return self.version.get('type_constants', {}).get(self.value, Byte.asm.fget(self))
+	constants = 'type_constants'
 
 class Status(Int):
 	masks = {
@@ -69,20 +64,17 @@ class SecondaryStatus(Status):
 	}
 
 class SpecialStatus(Status):
-	masks = {
-	}
+	masks = {}
 
 class InvalidBattleTextId(Exception):
 	pass
 
 class BattleTextId(Word):
+	constants = 'battle_text_constants'
 	def parse(self):
 		Word.parse(self)
 		if self.value > 400:
 			raise InvalidBattleTextId
-	@property
-	def asm(self):
-		return self.version.get('battle_text_constants', {}).get(self.value, Word.asm.fget(self))
 
 class BattleTextList(UnboundedList):
 	param_classes = [BattleTextId]
@@ -92,14 +84,10 @@ class BattleTextListPointer(Pointer):
 
 
 class Target(Byte):
-	@property
-	def asm(self):
-		if self.value == 0:
-			return 'TARGET'
-		elif self.value == 1:
-			return 'USER'
-		else:
-			return Byte.asm.fget(self)
+	constants = {
+		0: 'TARGET',
+		1: 'USER',
+	}
 
 
 battle_script_commands = {

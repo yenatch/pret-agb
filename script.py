@@ -73,6 +73,22 @@ class Value(Param):
         self.value = sum(byte << (8 * i) for i, byte in enumerate(bytes_))
         self.last_address = self.address + self.num_bytes
 
+    def get_constant(self, constants=None):
+        if constants is None:
+            if hasattr(self, 'constants'):
+                constants = self.constants
+	if type(constants) is str:
+		constants = self.version.get(constants, {})
+	return constants.get(self.value)
+
+    @property
+    def constant(self):
+        return self.get_constant()
+
+    @property
+    def asm(self):
+        return self.constant or Param.asm.fget(self)
+
 class Byte(Value):
     name = '.byte'
     num_bytes = 1
@@ -86,7 +102,7 @@ class Int(Value):
     num_bytes = 4
     @property
     def asm(self):
-        return '0x{:x}'.format(self.value)
+        return self.constant or '0x{:x}'.format(self.value)
 
 class SignedInt(Int):
 	def parse(self):
