@@ -1,6 +1,7 @@
 from script import *
 from text import *
 from event_script import make_command_classes
+from macros import get_script_macros
 
 
 class BattleScript(Script):
@@ -1138,21 +1139,9 @@ battle_script_commands = {
 battle_script_command_classes = make_command_classes(battle_script_commands, 'BattleCommand_')
 
 
-def print_battle_script_macros():
-	from create_event_macros import make_event_macro
-	lines = []
-	for byte, cmd in sorted(battle_script_commands.items()):
-		if cmd.has_key('macro'):
-			lines += [cmd['macro']]
-			continue
-		lines += [make_event_macro(byte, cmd).rstrip()]
-	text = '\n\n'.join(lines)
-	text = '\n'.join(line.rstrip() for line in text.split('\n'))
-	print text
-
 
 if __name__ == '__main__':
-	args = get_args([
+	args = get_args(
 		('addresses', {
 			'nargs': '*',
 		}),
@@ -1163,9 +1152,9 @@ if __name__ == '__main__':
 		('--macros', {
 			'action': 'store_true',
 		}),
-	])
+	)
 	if args.macros:
-		print_battle_script_macros()
+		print get_script_macros(battle_script_commands)
 	elif args.insert:
 		for address in args.addresses:
 			address = int(address, 16)

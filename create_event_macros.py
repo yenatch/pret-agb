@@ -237,27 +237,26 @@ def make_event_macros(commands, enum=False):
 	lines = []
 	if enum: lines += ['\tenum_start\n']
 
-	for byte, cmd in commands.items():
+	for byte, command in commands.items():
 		if byte >= num_commands:
 			continue
-		lines += [make_event_macro(byte, cmd, enum=enum)]
+		lines += [get_macro(byte, command, enum=enum)]
 
 	text = '\n\n'.join(line.rstrip() for line in lines)
 	return text.rstrip()
 
-def make_event_macro(byte, cmd, enum=False):
+def get_macro(byte, command, enum=False):
 
 	text = ''
 
-	name = cmd['name']
-	param_types = cmd.get('param_types', [])
-	param_names = cmd.get('param_names', [])
-	aliases = cmd.get('aliases', [])
+	name = command['name']
+	param_types = command.get('param_types', [])
+	param_names = command.get('param_names', [])
+	aliases = command.get('aliases', [])
 
 	args = ', '.join(param_names)
 	arg_behavior = []
 	for param_type, param_name in zip(param_types, param_names):
-		#macro = '.' + param_type
 		macro = {
 			'byte': '.byte',
 			'word': '.2byte',
@@ -271,8 +270,9 @@ def make_event_macro(byte, cmd, enum=False):
 
 		arg_behavior.append('\t{macro} \\{param_name}\n'.format(macro=macro, param_name=param_name))
 
-	if cmd.has_key('description'):
-		lines = cmd['description'].split('\n')
+	description = command.get('description')
+	if description:
+		lines = description.split('\n')
 		text += '\n'.join(['\t@ ' + line for line in lines]) + '\n'
 
 	const_text = '_' + name

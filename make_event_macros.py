@@ -1,7 +1,7 @@
-from create_event_macros import make_event_macro
 from event_script import event_commands
+from macros import get_script_macros
 
-trainerbattle = """\
+event_commands[0x5c]['macro'] = """\
 	@ If the Trainer flag for Trainer index is not set, this command does absolutely nothing.
 	.macro trainerbattle type, trainer, word, pointer1, pointer2, pointer3, pointer4
 	.byte 0x5c
@@ -46,7 +46,7 @@ trainerbattle = """\
 	.endm
 """
 
-supplementary = """
+event_supplementary = """
 @ Supplementary
 
 	.macro jumpeq dest
@@ -63,18 +63,8 @@ supplementary = """
 	.endm
 """
 
-def print_event_macros():
-	lines = []
-	event_commands[0x5c] = {'macro': trainerbattle}
-	for byte, cmd in sorted(event_commands.items()):
-		if cmd.has_key('macro'):
-			lines += [cmd['macro']]
-			continue
-		lines += [make_event_macro(byte, cmd).rstrip()]
-	text = '\n\n'.join(lines)
-	text = '\n'.join(line.rstrip() for line in text.split('\n'))
-	text += '\n\n' + supplementary
-	print text
+def get_event_macros():
+	return get_script_macros(event_commands) + '\n\n' + event_supplementary
 
 if __name__ == '__main__':
-	print_event_macros()
+	print get_event_macros()
