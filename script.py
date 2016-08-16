@@ -181,58 +181,45 @@ class ParamGroup(Chunk):
         return ', '.join(param.asm for param in self.chunks)
 
 class Variable(Word):
+    variable_constants = {
+        0x800c: 'FACING',
+        0x800d: 'RESULT',
+        0x800f: 'LAST_TALKED',
+    }
     @property
     def asm(self):
-        return {
-            0x800c: 'FACING',
-            0x800d: 'RESULT',
-            0x800f: 'LAST_TALKED',
-        }.get(self.value, '0x{:x}'.format(self.value))
+	return self.constant or variable_constants.get(self.value) or '0x{:x}'.format(self.value)
 
-class WordOrVariable(Word):
+class WordOrVariable(Variable):
     @property
     def asm(self):
         if self.value >= 0x4000:
             return Variable.asm.fget(self)
-        return str(self.value)
+        return Word.asm.fget(self)
 
 class Species(WordOrVariable):
-    @property
-    def asm(self):
-        return self.version.get('pokemon_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'pokemon_constants'
 
 class Item(WordOrVariable):
-    @property
-    def asm(self):
-        return self.version.get('item_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'item_constants'
 
 class Move(WordOrVariable):
-	@property
-	def asm(self):
-		return self.version.get('move_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'move_constants'
 
 class Decoration(WordOrVariable):
-	@property
-	def asm(self):
-		return self.version.get('decoration_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'decoration_constants'
 
 class Amount(Word):
-	pass
+    pass
 
 class BFItem(Item):
-	@property
-	def asm(self):
-		return self.version.get('battle_frontier_item_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'battle_frontier_item_constants'
 
 class TrainerId(WordOrVariable):
-	@property
-	def asm(self):
-		return self.version.get('trainer_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'trainer_constants'
 
 class FieldGFXId(WordOrVariable):
-	@property
-	def asm(self):
-		return self.version.get('field_gfx_constants', {}).get(self.value, WordOrVariable.asm.fget(self))
+    constants = 'field_gfx_constants'
 
 class Macro(ParamGroup):
     atomic = True
