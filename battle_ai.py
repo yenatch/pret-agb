@@ -231,4 +231,13 @@ battle_ai_commands = expand(battle_ai_commands)
 battle_ai_command_classes = make_command_classes(battle_ai_commands, 'BattleAICommand_')
 
 if __name__ == '__main__':
-	print print_recursive(BattleAIs, BattleAIs.address)
+	args = get_args(
+		('--macros', {'action': 'store_true'}),
+		('-i', {'dest': 'insert', 'action': 'store_true'})
+	)
+	if args.macros:
+		print get_script_macros(battle_ai_commands)
+	elif args.insert:
+		insert_recursive(BattleAIs, BattleAIs.address)
+	else:
+		print print_recursive(BattleAIs, BattleAIs.address)
