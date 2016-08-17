@@ -5,6 +5,8 @@
 
 import os
 
+from new import classobj
+
 from constants import *
 import versions
 
@@ -77,6 +79,8 @@ class Value(Param):
         if constants is None:
             if hasattr(self, 'constants'):
                 constants = self.constants
+            else:
+                constants = {}
 	if type(constants) is str:
 		constants = self.version.get(constants, {})
 	return constants.get(self.value)
@@ -116,6 +120,10 @@ class Pointer(Int):
     target = None
     target_arg_names = []
     include_address = True # passed to Label
+
+    class __metaclass__(Int.__metaclass__):
+        def to(cls, target, **kwargs):
+            return cls.extend(target=target).extend(**kwargs)
 
     def resolve(self):
         if not is_rom_address(self.value):
@@ -188,7 +196,7 @@ class Variable(Word):
     }
     @property
     def asm(self):
-	return self.constant or variable_constants.get(self.value) or '0x{:x}'.format(self.value)
+	return self.constant or self.variable_constants.get(self.value) or '0x{:x}'.format(self.value)
 
 class WordOrVariable(Variable):
     @property
@@ -335,14 +343,27 @@ class List(Chunk):
 		self.chunks += chunks
 		self.last_address = address
 
-class ItemList(List):
-	param_classes = [Item]
+class TerminatedList(List):
+	terminator = 0
 	def parse(self):
 		self.count = 0
 		List.parse(self)
-		while (not self.chunks) or self.chunks[-1].value != 0:
+		while 1:
+			if self.chunks:
+				try:
+					if self.terminator():
+						break
+				except:
+					if self.chunks[-1].value == self.terminator:
+						break
+			elif self.count:
+				break
 			self.count += 1
 			self.parse_item()
+		List.parse(self)
+
+class ItemList(TerminatedList):
+	param_classes = [Item]
 
 class DecorList(ItemList):
 	param_classes = [Decoration]
