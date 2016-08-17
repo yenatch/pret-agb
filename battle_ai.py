@@ -11,6 +11,7 @@ class BattleAIScript(Script):
 
 	infer_commands = [
 		'if_less_than', 'if_more_than', 'if_equal', 'if_not_equal',
+		'if_less_than_32', 'if_more_than_32', 'if_equal_32', 'if_not_equal_32',
 	]
 	def infer_types(self):
 		current_type = None
@@ -150,10 +151,10 @@ battle_ai_commands = {
 	0x12: ['if_more_than', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
 	0x13: ['if_equal', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
 	0x14: ['if_not_equal', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
-	0x15: ['if_less_than', (Int, 'value'), (BattleAIScriptPointer, 'address')],
-	0x16: ['if_more_than', (Int, 'value'), (BattleAIScriptPointer, 'address')],
-	0x17: ['if_equal', (Int, 'value'), (BattleAIScriptPointer, 'address')],
-	0x18: ['if_not_equal', (Int, 'value'), (BattleAIScriptPointer, 'address')],
+	0x15: ['if_less_than_32', (Int, 'value'), (BattleAIScriptPointer, 'address')],
+	0x16: ['if_more_than_32', (Int, 'value'), (BattleAIScriptPointer, 'address')],
+	0x17: ['if_equal_32', (Int, 'value'), (BattleAIScriptPointer, 'address')],
+	0x18: ['if_not_equal_32', (Int, 'value'), (BattleAIScriptPointer, 'address')],
 	0x19: ['if_move', (Move, 'move'), (BattleAIScriptPointer, 'address')],
 	0x1a: ['if_not_move', (Move, 'move'), (BattleAIScriptPointer, 'address')],
 	0x1b: ['if_in', (ByteListPointer, 'list'), (BattleAIScriptPointer, 'address')],
