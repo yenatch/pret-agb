@@ -75,7 +75,7 @@ class Value(Param):
         self.value = sum(byte << (8 * i) for i, byte in enumerate(bytes_))
         self.last_address = self.address + self.num_bytes
 
-    def get_constant(self, constants=None):
+    def get_constants(self, constants=None):
         if constants is None:
             if hasattr(self, 'constants'):
                 constants = self.constants
@@ -83,6 +83,10 @@ class Value(Param):
                 constants = {}
 	if type(constants) is str:
 		constants = self.version.get(constants, {})
+	return constants
+
+    def get_constant(self, constants=None):
+        constants = self.get_constants(constants)
 	return constants.get(self.value)
 
     @property
@@ -360,7 +364,6 @@ class TerminatedList(List):
 				break
 			self.count += 1
 			self.parse_item()
-		List.parse(self)
 
 class ItemList(TerminatedList):
 	param_classes = [Item]

@@ -1,40 +1,6 @@
 from battle_script import *
 
 
-class BattleAIScript(Script):
-	@property
-	def commands(self):
-		return battle_ai_command_classes
-	def parse(self):
-		Script.parse(self)
-		self.infer_types()
-
-	infer_commands = [
-		'if_less_than', 'if_more_than', 'if_equal', 'if_not_equal',
-		'if_less_than_32', 'if_more_than_32', 'if_equal_32', 'if_not_equal_32',
-	]
-	def infer_types(self):
-		current_type = None
-		for i, command in enumerate(self.chunks):
-			name = getattr(command, 'name', None)
-			if name == 'get_ability':
-				current_type = 'ability'
-			elif name == 'get_weather':
-				current_type = 'weather'
-			elif name == 'get_move_effect':
-				current_type = 'effect'
-			elif name in self.infer_commands:
-				if current_type == 'ability':
-					command.params['value'].constants = Ability.constants
-				elif current_type == 'weather':
-					command.params['value'].constants = Weather.constants
-				elif current_type == 'effect':
-					command.params['value'].constants = MoveEffect.constants
-			else:
-				current_type = None
-
-BattleAIScriptPointer = Pointer.to(BattleAIScript)
-
 class Score(Byte):
 	@property
 	def asm(self):
@@ -49,6 +15,12 @@ class Percent(Byte):
 class ByteList(TerminatedList):
 	param_classes = [Byte]
 	terminator = 0xff
+	def parse(self):
+		"""
+		A hack to prevent 16-bit constants from looking stupid.
+		"""
+		TerminatedList.parse(self)
+		self.chunks[-1].constants = {}
 
 ByteListPointer = Pointer.to(ByteList)
 
@@ -66,11 +38,6 @@ IntListPointer = Pointer.to(IntList)
 
 class TurnCount(Word):
 	pass
-
-class BattleAIs(List):
-	param_classes = [BattleAIScriptPointer]
-	count = 32
-	address = 0x1da01c
 
 class Stat(Byte):
 	constants = {
@@ -104,6 +71,66 @@ class Weather(Byte):
 
 class MoveEffect(Byte):
 	constants = 'move_effect_constants'
+
+class HoldEffect(Byte):
+	constants = 'hold_effect_constants'
+
+
+class BattleAIScript(Script):
+	@property
+	def commands(self):
+		return battle_ai_command_classes
+	def parse(self):
+		Script.parse(self)
+		self.infer_types()
+
+	infer_commands = [
+		'if_less_than', 'if_more_than', 'if_equal', 'if_not_equal',
+		'if_less_than_32', 'if_more_than_32', 'if_equal_32', 'if_not_equal_32',
+	]
+	infer_list_commands = [
+		'if_in_bytes', 'if_not_in_bytes', 'if_in_words', 'if_not_in_words',
+	]
+	command_types = {
+		'get_ability': Ability,
+		'get_weather': Weather,
+		'get_move_effect': MoveEffect,
+		'get_move': Move,
+		'get_move_type': Type,
+		'get_item': Item,
+		'get_effect': MoveEffect,
+		'get_type': Type,
+		'get_hold_effect': HoldEffect,
+	}
+	def infer_types(self):
+		current_type = None
+		for i, command in enumerate(self.chunks):
+			name = getattr(command, 'name', None)
+			if self.command_types.has_key(name):
+				current_type = self.command_types[name]
+			elif name in self.infer_commands:
+				if current_type and hasattr(current_type, 'constants'):
+					command.params['value'].constants = current_type.constants
+			elif name in self.infer_list_commands:
+				if current_type and hasattr(current_type, 'constants'):
+					pointer = command.params['list']
+					param = pointer.target.param_classes[0]
+					new_param = param.extend(
+						constants = current_type.constants
+					)
+					pointer.target = pointer.target.extend(
+						param_classes = [new_param] + pointer.target.param_classes[1:]
+					)
+					pointer.target.__name__ = current_type.__name__ + 'List'
+			else:
+				current_type = None
+
+BattleAIScriptPointer = Pointer.to(BattleAIScript)
+
+class BattleAIs(List):
+	param_classes = [BattleAIScriptPointer]
+	count = 32
+	address = 0x1da01c
 
 
 def expand(commands):
@@ -141,12 +168,12 @@ battle_ai_commands = {
 	0x08: ['if_hp_not_equal', (Target, 'target'), (Percent, 'percent'), (BattleAIScriptPointer, 'address')],
 	0x09: ['if_status', (Target, 'target'), (Status, 'status'), (BattleAIScriptPointer, 'address')],
 	0x0a: ['if_not_status', (Target, 'target'), (Status, 'status'), (BattleAIScriptPointer, 'address')],
-	0x0b: ['if_any_status2', (Target, 'target'), (SecondaryStatus, 'status'), (BattleAIScriptPointer, 'address')],
-	0x0c: ['if_no_status2', (Target, 'target'), (SecondaryStatus, 'status'), (BattleAIScriptPointer, 'address')],
-	0x0d: ['if_any_status3', (Target, 'target'), (SpecialStatus, 'status'), (BattleAIScriptPointer, 'address')],
-	0x0e: ['if_no_status3', (Target, 'target'), (SpecialStatus, 'status'), (BattleAIScriptPointer, 'address')],
-	0x0f: ['if_any_status4', (Target, 'target'), (UnknownStatus, 'status'), (BattleAIScriptPointer, 'address')],
-	0x10: ['if_no_status4', (Target, 'target'), (UnknownStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x0b: ['if_status2', (Target, 'target'), (SecondaryStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x0c: ['if_not_status2', (Target, 'target'), (SecondaryStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x0d: ['if_status3', (Target, 'target'), (SpecialStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x0e: ['if_not_status3', (Target, 'target'), (SpecialStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x0f: ['if_status4', (Target, 'target'), (UnknownStatus, 'status'), (BattleAIScriptPointer, 'address')],
+	0x10: ['if_not_status4', (Target, 'target'), (UnknownStatus, 'status'), (BattleAIScriptPointer, 'address')],
 	0x11: ['if_less_than', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
 	0x12: ['if_more_than', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
 	0x13: ['if_equal', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
@@ -164,10 +191,10 @@ battle_ai_commands = {
 	0x1f: ['if_user_can_damage', (BattleAIScriptPointer, 'address')],
 	0x20: ['if_user_cant_damage', (BattleAIScriptPointer, 'address')],
 	0x21: ['get_turn_count'],
-	0x22: ['ai_22', (Byte, 'byte')],
+	0x22: ['get_type', (Byte, 'byte')],
 	0x23: [],
 	0x24: ['is_most_powerful_move'],
-	0x25: ['ai_25', (Target, 'target')],
+	0x25: ['get_move', (Target, 'target')],
 	0x26: ['if_type', (Type, 'type'), (BattleAIScriptPointer, 'address')],
 	0x27: [],
 	0x28: ['if_would_go_first', (Target, 'target'), (BattleAIScriptPointer, 'address')],
@@ -176,13 +203,13 @@ battle_ai_commands = {
 	0x2b: [],
 	0x2c: ['count_alive_pokemon', (Target, 'target')],
 	0x2d: [],
-	0x2e: ['ai_2e'],
+	0x2e: ['get_effect'],
 	0x2f: ['get_ability', (Target, 'target')],
 	0x30: [],
 	0x31: ['if_damage_bonus', (Byte, 'value'), (BattleAIScriptPointer, 'address')],
 	0x32: [],
 	0x33: [],
-	0x34: ['ai_34', (Target, 'target'), (Status, 'status'), (BattleAIScriptPointer, 'address')],
+	0x34: ['ai_34', (Target, 'target'), (SecondaryStatus, 'status'), (BattleAIScriptPointer, 'address')],
 	0x35: [],
 	0x36: ['get_weather'],
 	0x37: ['if_effect', (MoveEffect, 'byte'), (BattleAIScriptPointer, 'address')],
@@ -195,16 +222,16 @@ battle_ai_commands = {
 	0x3e: ['if_cant_faint', (BattleAIScriptPointer, 'address')],
 	0x3f: ['if_has_move'],
 	0x40: ['if_dont_have_move'],
-	0x41: ['if_similar_move', (Byte, 'byte'), (Byte, 'byte2'), (BattleAIScriptPointer, 'address')],
-	0x42: ['if_no_similar_move', (Byte, 'byte'), (Byte, 'byte2'), (BattleAIScriptPointer, 'address')],
-	0x43: ['ai_43'], # wrong
+	0x41: ['if_move_effect', (Target, 'target'), (MoveEffect, 'effect'), (BattleAIScriptPointer, 'address')],
+	0x42: ['if_not_move_effect', (Target, 'target'), (MoveEffect, 'effect'), (BattleAIScriptPointer, 'address')],
+	0x43: ['if_last_move_did_damage', (Target, 'target'), (Byte, 'byte'), (BattleAIScriptPointer, 'address')],
 	0x44: ['if_encored', (BattleAIScriptPointer, 'address')],
 	0x45: ['ai_45'],
 	0x46: ['ai_46', (BattleAIScriptPointer, 'address')],
 	0x47: ['ai_47'],
-	0x48: ['ai_48', (Target, 'target')],
+	0x48: ['get_hold_effect', (Target, 'target')],
 	0x49: ['get_gender', (Target, 'target')],
-	0x4a: ['ai_4a', (Byte, 'byte'), (Word, 'word'), (BattleAIScriptPointer, 'address')],
+	0x4a: ['ai_4a', (Target, 'target')],
 	0x4b: ['get_stockpile_count', (Target, 'target')],
 	0x4c: ['is_double_battle'],
 	0x4d: ['get_item', (Target, 'target')],
@@ -212,16 +239,16 @@ battle_ai_commands = {
 	0x4f: ['get_move_power'],
 	0x50: ['get_move_effect'],
 	0x51: ['get_protect_count', (Target, 'target')],
-	0x52: ['ai_52'],
-	0x53: ['ai_53'],
-	0x54: ['ai_54'],
-	0x55: ['ai_55'],
-	0x56: ['ai_56'],
-	0x57: ['ai_57'],
+	0x52: [],
+	0x53: [],
+	0x54: [],
+	0x55: [],
+	0x56: [],
+	0x57: [],
 	0x58: ['call', (BattleAIScriptPointer, 'address')],
 	0x59: ['jump', (BattleAIScriptPointer, 'address'), {'end': True}],
 	0x5a: ['end', {'end': True}],
-	0x5b: ['ai_5b'],
+	0x5b: ['ai_5b', (Target, 'target'), (BattleAIScriptPointer, 'address')],
 	0x5c: ['if_taunted', (BattleAIScriptPointer, 'address')],
 	0x5d: ['if_not_taunted', (BattleAIScriptPointer, 'address')],
 }

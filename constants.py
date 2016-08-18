@@ -73,6 +73,12 @@ def read_constants(path):
 				pass
 			else:
 				variables[name.strip()] = int(value, 0)
+		elif line.startswith('.equiv'):
+			name, value = line.split('.equiv')[1].split(',')
+			if '<<' in value: # not supported yet
+				pass
+			else:
+				variables[name.strip()] = int(value, 0)
 
 		elif line.startswith('enum_start'):
 			try:
@@ -112,6 +118,7 @@ def setup_version(version):
 		'ability_constants': read_reverse_constants('constants/ability_constants.s'),
 		'type_constants': read_reverse_constants('constants/type_constants.s'),
 		'move_effect_constants': read_reverse_constants('constants/move_effects.s'),
+		'hold_effect_constants': read_reverse_constants('constants/hold_effects.s'),
 	})
 
 	version['labels'] = {}
