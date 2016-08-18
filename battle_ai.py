@@ -51,22 +51,17 @@ class Stat(Byte):
 	}
 
 class StatLevel(Byte):
-	# this is kind of an abuse...
-	constants = {
-		12: 'MAX_STAT + 1',
-		0: 'MIN_STAT - 1',
-	}
+	pass
 
 class UnknownStatus(Status):
 	masks = {}
 
 class Weather(Byte):
 	constants = {
-		0: 'WEATHER_NONE',
+		0: 'WEATHER_SUN',
 		1: 'WEATHER_RAIN',
-		2: 'WEATHER_SUN',
-		3: 'WEATHER_SANDSTORM',
-		4: 'WEATHER_HAIL',
+		2: 'WEATHER_SANDSTORM',
+		3: 'WEATHER_HAIL',
 	}
 
 class MoveEffect(Byte):
@@ -226,12 +221,12 @@ battle_ai_commands = {
 	0x42: ['if_not_move_effect', (Target, 'target'), (MoveEffect, 'effect'), (BattleAIScriptPointer, 'address')],
 	0x43: ['if_last_move_did_damage', (Target, 'target'), (Byte, 'byte'), (BattleAIScriptPointer, 'address')],
 	0x44: ['if_encored', (BattleAIScriptPointer, 'address')],
-	0x45: ['ai_45'],
+	0x45: ['flee'],
 	0x46: ['ai_46', (BattleAIScriptPointer, 'address')],
 	0x47: ['ai_47'],
 	0x48: ['get_hold_effect', (Target, 'target')],
 	0x49: ['get_gender', (Target, 'target')],
-	0x4a: ['ai_4a', (Target, 'target')],
+	0x4a: ['is_first_turn', (Target, 'target')],
 	0x4b: ['get_stockpile_count', (Target, 'target')],
 	0x4c: ['is_double_battle'],
 	0x4d: ['get_item', (Target, 'target')],
@@ -260,11 +255,18 @@ battle_ai_command_classes = make_command_classes(battle_ai_commands, 'BattleAICo
 if __name__ == '__main__':
 	args = get_args(
 		('--macros', {'action': 'store_true'}),
-		('-i', {'dest': 'insert', 'action': 'store_true'})
+		('-i', {'dest': 'insert', 'action': 'store_true'}),
+		('addresses', {'nargs': '*', 'type': lambda x: int(x, 16)})
 	)
 	if args.macros:
 		print get_script_macros(battle_ai_commands)
-	elif args.insert:
-		insert_recursive(BattleAIs, BattleAIs.address)
 	else:
-		print print_recursive(BattleAIs, BattleAIs.address)
+		if args.addresses:
+			cls, addresses = BattleAIScript, args.addresses
+		else:
+			cls, addresses = BattleAIs, [BattleAIs.address]
+		for address in addresses:
+			if args.insert:
+				insert_recursive(cls, address)
+			else:
+				print print_recursive(cls, address)

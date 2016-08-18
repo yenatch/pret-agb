@@ -23,7 +23,7 @@ ruby = {
 	'baserom_path': 'baserom.gba',
 	'maps_paths': [
 		'data/data1.s', 'data/data2.s', 'data/graphics.s', 'data/sound_data.s', 'asm/crt0.s', 'asm/rom1.s', 'asm/rom2.s', 'asm/rom3.s', 'asm/rom4.s', 'asm/rom5.s', 'asm/libgcnmultiboot.s', 'asm/m4a_1.s', 'asm/m4a_3.s', 'asm/libagbsyscall.s', 'asm/libc.s',
-		'data/event_scripts.s',
+		'data/event_scripts.s', 'data/battle_ai_scripts.s',
 	],
 	'force_stop_addresses': [],
 	'map_names': map_names.ruby,
@@ -38,7 +38,7 @@ sapphire = {
 	'baserom_path': 'baserom_sapphire.gba',
 	'maps_paths': [
 		'data/data1.s', 'data/data2.s', 'data/graphics.s', 'data/sound_data.s', 'asm/crt0.s', 'asm/rom1.s', 'asm/rom2.s', 'asm/rom3.s', 'asm/rom4.s', 'asm/rom5.s', 'asm/libgcnmultiboot.s', 'asm/m4a_1.s', 'asm/m4a_3.s', 'asm/libagbsyscall.s', 'asm/libc.s',
-		'data/event_scripts.s',
+		'data/event_scripts.s', 'data/battle_ai_scripts.s',
 	],
 	'force_stop_addresses': [],
 	'map_names': map_names.ruby,
