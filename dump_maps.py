@@ -8,12 +8,13 @@ g = ''
 
 def dump_maps(version):
 	rom = version['baserom']
-	address = version['map_groups_address']
+	chunks = get_maps(version)
 	label = Label(address, asm='gMapGroups')
-	chunks = recursive_parse(MapGroups, address, version=version, rom=rom)
 	chunks[address].label = label
 	return chunks.values()
 
+def get_maps(version):
+	return recursive_parse(MapGroups, version=version)
 
 class MapBorder(BinFile):
 	size = 4 * 2
@@ -71,7 +72,7 @@ class MapAttributes(ParamGroup):
 	]
 	def parse(self):
 		ParamGroup.parse(self)
-		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
+		map_name = get_map_name(self.version.get('map_groups'), self.__dict__.get('group'), self.__dict__.get('num'))
 		blockdata_p = self.params['blockdata_p']
 		blockdata_p.width = self.params['width'].value
 		blockdata_p.height = self.params['height'].value
@@ -278,33 +279,44 @@ class MapConnectionsPointer(Pointer):
 class Map(ParamGroup):
 	param_classes = [
 		('attributes_p', MapAttributesPointer),
-		MapEventsPointer,
-		MapScriptsPointer,
-		MapConnectionsPointer,
-		Word, Word, Byte, Byte, Byte, Byte,
-		Word, Byte, Byte,
+		('events_p', MapEventsPointer),
+		('scripts_p', MapScriptsPointer),
+		('connections_p', MapConnectionsPointer),
+		('bgm', Word),
+		('index', Word),
+		('location', Byte),
+		('visibility', Byte),
+		('weather', Byte),
+		('type', Byte),
+		Word,
+		('show_location', Byte),
+		('battle_scene', Byte),
 	]
 
 	def parse(self):
 		ParamGroup.parse(self)
 		attributes_p = self.params['attributes_p']
-		attributes_p.group = self.group
-		attributes_p.num = self.num
+		if hasattr(self, 'group'):
+			attributes_p.group = self.group
+		if hasattr(self, 'num'):
+			attributes_p.num = self.num
 
 	@property
 	def context_label(self):
-		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
+		map_name = get_map_name(self.version.get('map_groups'), self.group, self.num)
 		if map_name:
 			return g + map_name
 		return g
 
 class MapPointer(Pointer):
 	target = Map
-	target_arg_names = ['group', 'num']
+	target_arg_names = ['group', 'num', 'map_name']
 
 	@property
 	def context_label(self):
-		map_name = get_map_name(self.version['map_groups'], self.group, self.num)
+		map_name = None
+		if hasattr(self, 'group') and hasattr(self, 'num'):
+			map_name = get_map_name(self.version.get('map_groups'), self.group, self.num)
 		if map_name:
 			return g + map_name
 		return g
@@ -329,6 +341,9 @@ class MapGroupPointer(Pointer):
     target_arg_names = ['group']
 
 class MapGroups(List):
+    @property
+    def address(self):
+        return self.version['map_groups_address']
     param_classes = [MapGroupPointer]
     def parse(self):
         self.count = len(self.version['map_groups'])
@@ -340,6 +355,7 @@ class MapGroups(List):
             label.asm = label_name
             chunk.chunks += [label]
             chunk.label = label
+
 
 if __name__ == '__main__':
     from argparse import ArgumentParser as ap

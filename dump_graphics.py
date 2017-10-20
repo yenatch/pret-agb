@@ -1,26 +1,66 @@
 from script import *
 import versions
 
+class PairedPal(Chunk):
+	pass
+
+class PairedPalPointer(Pointer):
+	target = PairedPal
+
+class PairedPals(Macro):
+	name = 'paired_pals'
+	param_classes = [
+		('tag', Word),
+		('filler', Word),
+		('address', PairedPalPointer),
+	]
+	@property
+	def asm(self):
+		return ', '.join([self.params['tag'].asm, self.params['address'].asm])
+
+class SpriteTemplate(Macro):
+	name = 'spr_template'
+	param_classes = [
+		Word, Word, Pointer, Pointer, Pointer, Pointer, ThumbPointer
+	]
+
 class Graphic(BinFile):
 	size = 32
 	@property
 	def filename(self):
 		return 'graphics/unsorted/' + hex(self.address) + '.4bpp'
 
-class GraphicPointer(RomPointer):
+class GraphicPointer(Pointer):
 	target = Graphic
+	target_arg_names = ['size', 'filename']
+
+class GraphicSize(Word):
+	@property
+	def asm(self):
+		return hex(self.value)
+
+class Tiles(Chunk):
+	pass
+
+class TilesPointer(Pointer):
+	target = Tiles
 	target_arg_names = ['size', 'filename']
 
 class ObjTiles(Macro):
 	name = 'obj_tiles'
 	param_classes = [
-		('address', GraphicPointer),
-		('size', Word),
+		('address', TilesPointer),
+		('size', GraphicSize),
 		('tag', Word),
 	]
-	_length = 8
+	size = 8
 	def parse(self):
 		Macro.parse(self)
+		address = self.params['address']
+		size = self.params['size']
+		tag = self.params['tag']
+		address.size = size.value
+	def validate(self):
 		address = self.params['address']
 		size = self.params['size']
 		tag = self.params['tag']
@@ -30,7 +70,8 @@ class ObjTiles(Macro):
 			raise Exception('ObjTiles at 0x{:x}: size is {}'.format(self.address, size.value))
 		if not tag.value:
 			raise Exception('ObjTiles at 0x{:x}: tag is {}'.format(self.address, size.value))
-		address.size = size.value
+	def is_null(self):
+		return all(chunk.value == 0 for chunk in self.chunks)
 
 class RGB(Macro):
 	"""
@@ -51,7 +92,9 @@ class RGB(Macro):
 class RGBPalette(ParamGroup):
 	param_classes = [RGB] * 16
 
-class Palette(BinFile):
+class Palette(Chunk):
+	size = 2 * 16
+class PalFile(BinFile):
 	size = 2 * 16
 	@property
 	def filename(self):
@@ -68,9 +111,10 @@ class ObjPal(Macro):
 		('tag', Word),
 		('filler', Word),
 	]
-	_length = 8
+	size = 8
 	def parse(self):
 		Macro.parse(self)
+	def validate(self):
 		address = self.params['address']
 		tag = self.params['tag']
 		filler = self.params['filler']
@@ -83,12 +127,18 @@ class ObjPal(Macro):
 	@property
 	def asm(self):
 		return ', '.join([self.params['address'].asm, self.params['tag'].asm])
+	def is_null(self):
+		return all(chunk.value == 0 for chunk in self.chunks)
 
 class ObjTilesOrObjPal(ParamGroup):
+	def validate(self):
+		for chunk in self.chunks:
+			chunk.validate()
 	def parse(self):
 		try:
 			self.param_classes = [ObjTiles]
 			ParamGroup.parse(self)
+			self.validate()
 		except:
 			self.param_classes = [ObjPal]
 			ParamGroup.parse(self)
@@ -110,8 +160,8 @@ def dump_graphics(filename, version):
 			_, start, length = read_incbin(line)
 			start = int(start, 16)
 			length = int(length, 16)
-			count = length / ObjTiles._length
-			if (not count) or length % ObjTiles._length:
+			count = length / ObjTiles.size
+			if (not count) or length % ObjTiles.size:
 				continue
 			try:
 				chunks_ = recursive_parse(

@@ -18,6 +18,17 @@ def decode(input, decode_charmap):
 				item_ = item.get(None)
 			item = item_
 			i += 1
+                if item in ['{COLOR}', '{HIGHLIGHT}', '{SHADOW}']:
+                    color = colors.get(old[i])
+                    if color:
+                        item += '{{{}}}'.format(color)
+                        i += 1
+                elif item in ['{COLOR_HIGHLIGHT_SHADOW}']:
+                    for _ in xrange(3):
+                        color = colors.get(old[i])
+                        if color:
+                            item += '{{{}}}'.format(color)
+                            i += 1
 		chars = item
 		if chars is None:
 			chars = ''.join('{' + hex(byte) + '}' for byte in old[start:i])
@@ -61,7 +72,8 @@ colors = [
 	'SKY_BLUE',
 	'LIGHT_BLUE',
 	'WHITE2',
-],
+]
+colors = dict(enumerate(colors))
 
 emerald_decode = {
 	0x00: u' ',
@@ -154,7 +166,7 @@ emerald_decode = {
 	0x54: u'{MN}',
 	0x55: {
 		None: u'{PO}',
-		0x56:{0x57:{0x58:{0x59: '{POKEBLOCK}'}}},
+		0x56:{0x57:{0x58:{0x59: u'{POKEBLOCK}'}}},
 	},
 	0x56: u'{KE}',
 	0x57: u'{BL}',

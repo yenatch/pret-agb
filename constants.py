@@ -21,8 +21,24 @@ def find_labels(path):
 				pass
 	return labels
 
+def read_mapfile(path):
+	"""This is way simpler..."""
+	labels = {}
+	for line in open(path):
+		parts = line.split(' ' * 16)
+		if len(parts) > 2:
+			label = parts[2].strip()
+			if '=' in label.split() or '.' in label.split():
+				continue
+			address = int(parts[1], 0)
+			if address & 0x02000000:
+				labels[address] = label
+			elif address & 0x08000000:
+				labels[address] = label
+	return labels
+
 def load_rom(filename):
-    return bytearray(open(filename).read())
+	return bytearray(open(filename, 'rb').read())
 
 def read_map_groups(path, map_names):
 	lines = open(path).readlines()
@@ -44,23 +60,24 @@ def read_map_groups(path, map_names):
 			maps[group][num] = name
 			variables['cur_map_num'] += 1
 
-        # Replace the constants with capitalized map names.
-        # This is only necessary if the constants have not already been fixed.
-        i = 0
-        for group_num, group in maps.items():
-            for map_num, name in group.items():
-                new_name = map_names[i]
-                maps[group_num][map_num] = new_name
-                i += 1
+	# Replace the constants with capitalized map names.
+	# This is only necessary if the constants have not already been fixed.
+	i = 0
+	for group_num, group in maps.items():
+		for map_num, name in group.items():
+			new_name = map_names[i]
+			maps[group_num][map_num] = new_name
+			i += 1
 
 	return maps
 
 def get_map_name(map_groups, group, num):
-	group = map_groups.get(group)
-	if group:
-		label = group.get(num)
-		if label:
-			return label
+	if map_groups:
+		group = map_groups.get(group)
+		if group:
+			label = group.get(num)
+			if label:
+				return label
 
 def read_constants(path):
 	lines = open(path).readlines()
@@ -72,13 +89,23 @@ def read_constants(path):
 			if '<<' in value: # not supported yet
 				pass
 			else:
-				variables[name.strip()] = int(value, 0)
+				value = value.strip()
+				if value in variables.keys():
+					value = variables[value]
+				else:
+					value = int(value, 0)
+				variables[name.strip()] = value
 		elif line.startswith('.equiv'):
 			name, value = line.split('.equiv')[1].split(',')
 			if '<<' in value: # not supported yet
 				pass
 			else:
-				variables[name.strip()] = int(value, 0)
+				value = value.strip()
+				if value in variables.keys():
+					value = variables[value]
+				else:
+					value = int(value, 0)
+				variables[name.strip()] = value
 
 		elif line.startswith('enum_start'):
 			try:
@@ -100,30 +127,35 @@ def read_reverse_constants(path):
 
 
 def setup_version(version):
+	if version.has_key('baserom_path'):
+		version['baserom'] = load_rom(version['baserom_path'])
+	if version.has_key('map_names'):
+		version['map_groups'] = read_map_groups('constants/map_constants.inc', version['map_names'])
 	version.update({
-		'baserom': load_rom(version['baserom_path']),
-		'map_groups': read_map_groups('constants/map_constants.s', version['map_names']),
-		'pokemon_constants': read_reverse_constants('constants/species_constants.s'),
-		'item_constants': read_reverse_constants('constants/item_constants.s'),
+		'pokemon_constants': read_reverse_constants('constants/species_constants.inc'),
+		'item_constants': read_reverse_constants('constants/item_constants.inc'),
 		'trainer_constants': {
-			v: k for k, v in read_constants('constants/trainer_constants.s').items()
+			v: k for k, v in read_constants('constants/trainer_constants.inc').items()
 			if k.startswith('TRAINER_')
 			and not k.startswith('TRAINER_PIC_')
 			and not k.startswith('TRAINER_CLASS_')
 			and not k.startswith('TRAINER_CLASS_NAME_')
 			and not k.startswith('TRAINER_ENCOUNTER_MUSIC_')
 		},
-		'move_constants': read_reverse_constants('constants/move_constants.s'),
-		'battle_text_constants': read_reverse_constants('constants/battle_text.s'),
-		'ability_constants': read_reverse_constants('constants/ability_constants.s'),
-		'type_constants': read_reverse_constants('constants/type_constants.s'),
-		'move_effect_constants': read_reverse_constants('constants/move_effects.s'),
-		'hold_effect_constants': read_reverse_constants('constants/hold_effects.s'),
+		'move_constants': read_reverse_constants('constants/move_constants.inc'),
+		'battle_text_constants': read_reverse_constants('constants/battle_text.inc'),
+		'ability_constants': read_reverse_constants('constants/ability_constants.inc'),
+		'type_constants': read_reverse_constants('constants/type_constants.inc'),
+		'move_effect_constants': read_reverse_constants('constants/battle_move_effects.inc'),
+		'hold_effect_constants': read_reverse_constants('constants/hold_effects.inc'),
 	})
 
-	version['labels'] = {}
-	for path in version['maps_paths']:
-		version['labels'].update(find_labels(path))
+	if version.get('mapfile'):
+		version['labels'] = read_mapfile(version.get('mapfile'))
+	else:
+		version['labels'] = {}
+		for path in version.get('maps_paths', []):
+			version['labels'].update(find_labels(path))
 
 	path = version.get('frontier_item_constants_path')
 	if path:

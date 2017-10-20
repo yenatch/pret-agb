@@ -21,18 +21,38 @@ def is_label(asm):
             return True
     return False
 
-
 class Object(object):
     arg_names = []
-    rom = None
-    version = None
+
+    _rom = None
+    @property
+    def rom(self):
+        return self._rom or (self.version or {}).get('baserom')
+    @rom.setter
+    def rom(self, value):
+        self._rom = value
+
+    _version = None
+    @property
+    def version(self):
+        if type(self._version) is str:
+            self._version = get_setup_version(self._version)
+        return self._version
+    @version.setter
+    def version(self, value):
+        self._version = value
+
     class __metaclass__(type):
         def extend(cls, **kwargs):
             return classobj(cls.__name__, (cls,), kwargs)
+
     def __init__(self, *args, **kwargs):
-        map(self.__dict__.__setitem__, self.arg_names, args)
-        self.__dict__.update(kwargs)
+        for name, arg in zip(self.arg_names, args):
+            setattr(self, name, arg)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         self.parse()
+
     def parse(self):
         pass
 
@@ -51,6 +71,20 @@ class Chunk(Object):
         return None
     def __repr__(self):
         return self.__class__.__name__ + '(' + hex(self.address) + ')'
+
+    def recursive_parse(self):
+        for chunk in self.chunks:
+            chunk.recursive_parse()
+    def unwrap(self, labels_only=False):
+        chunks = []
+        if not labels_only and self.atomic:
+            chunks += [self]
+        for chunk in self.chunks:
+            chunks += chunk.unwrap(labels_only = labels_only or self.atomic)
+        return chunks
+
+class Unknown(Chunk):
+	pass
 
 class Param(Chunk):
     num_bytes = 1
@@ -83,6 +117,8 @@ class Value(Param):
                 constants = {}
 	if type(constants) is str:
 		constants = self.version.get(constants, {})
+	if type(constants) is list:
+		constants = dict(enumerate(constants))
 	return constants
 
     def get_constant(self, constants=None):
@@ -121,7 +157,7 @@ class SignedInt(Int):
 		return str(self.value)
 
 class Pointer(Int):
-    target = None
+    target = Unknown
     target_arg_names = []
     include_address = True # passed to Label
 
@@ -137,14 +173,14 @@ class Pointer(Int):
         return self.target(self.real_address, **self.target_args)
     @property
     def target_args(self):
-        return { k: getattr(self, k, None) for k in self.target_arg_names }
+        return { k: getattr(self, k, None) for k in self.target_arg_names if getattr(self, k, None)}
     def get_label(self):
         if hasattr(self, 'label'):
             return self.label.asm
         return self.version['labels'].get(self.value)
     @property
     def real_address(self):
-        if not is_rom_address(self.value) and not self.value == 0:
+        if not is_rom_address(self.value) and self.value != 0:
             return None
         return self.value & 0x1ffffff
     @property
@@ -154,6 +190,56 @@ class Pointer(Int):
             return label
         return '0x{:x}'.format(self.value)
 
+    seen_addresses = set()
+    def seen(self):
+        return self.real_address in self.__class__.seen_addresses
+    def mark_seen(self):
+        self.__class__.seen_addresses.add(self.real_address)
+
+    def recursive_parse(self):
+        if self.real_address and self.target:
+            if self.target and not self.seen():
+                self.mark_seen()
+                if isinstance(self.target, type):
+                    target = self.target
+                else:
+                    target = self.target.__class__
+                self.target = target(
+                    self.real_address,
+                    version=self.version,
+                    parent=self,
+                    **self.target_args
+                )
+		self.target.recursive_parse()
+
+            if not hasattr(self, 'label') or not self.label:
+                label = Label(
+                    self.real_address,
+                    default_label_base=(
+                        self.target.__name__
+                        if isinstance(self.target, type) else
+                        self.target.__class__.__name__
+                    ),
+                    include_address=self.include_address,
+                    version=self.version,
+                    rom=self.rom,
+                    parent=self
+                )
+                asm = self.version['labels'].get(self.value)
+                #if asm and 'Unknown' not in asm: label.asm = asm
+                if asm: label.asm = asm
+                self.label = label
+
+        Int.recursive_parse(self)
+
+    def unwrap(self, labels_only=False):
+        chunks = Int.unwrap(self, labels_only=labels_only)
+	if self.target and not isinstance(self.target, type):
+            chunks += self.target.unwrap()
+	if hasattr(self, 'label') and self.label:
+            chunks += [self.label]
+        return chunks
+
 class RomPointer(Pointer):
     @property
     def real_address(self):
@@ -162,11 +248,13 @@ class RomPointer(Pointer):
         return self.value & 0x1ffffff
 
 class ThumbPointer(RomPointer):
+    target = None
     def get_label(self):
-        return Pointer.get_label(self) or self.version['labels'].get(self.value - 1)
+        return Pointer.get_label(self) or self.version['labels'].get(self.value & ~1)
 
 class ParamGroup(Chunk):
     param_classes = []
+
     def parse(self):
         Chunk.parse(self)
         address = self.address
@@ -188,9 +276,21 @@ class ParamGroup(Chunk):
                 self.params[name] = param
             address += param.length
         self.last_address = address
+
     @property
     def asm(self):
         return ', '.join(param.asm for param in self.chunks)
+
+    def to_asm(self):
+        text = ''
+        for i, chunk in enumerate(self.chunks):
+            if i and chunk.name == self.chunks[i-1].name:
+                text += ', ' + chunk.asm
+            else:
+                if i:
+                    text += '\n'
+                text += chunk.to_asm()
+        return text
 
 class Variable(Word):
     variable_constants = {
@@ -271,7 +371,7 @@ class Label(Chunk):
                 label = self.context_label + '_' + self.default_label_base
             else:
                 label = self.default_label_base
-            if self.include_address:
+            if self.include_address or not self.context_label:
                 #label += '_{}'.format(self.count(label))
                 label += '_{:X}'.format(self.address)
             self.asm = label
@@ -318,7 +418,6 @@ class Script(Chunk):
     def to_asm(self):
         return print_chunks(self.chunks)
 
-
 class List(Chunk):
 	param_classes = []
 	def parse(self):
@@ -331,6 +430,8 @@ class List(Chunk):
 	def parse_item(self):
 		chunks = []
 		address = self.last_address
+		if address is None:
+			address = self.address
 		for item in self.param_classes:
 			name = None
 			try:
@@ -414,7 +515,7 @@ class MapId(Macro):
             return 'NONE'
         if group == 0xff and number == 0xff:
             return 'UNDEFINED'
-        map_name = self.version['map_groups'].get(group, {}).get(number)
+        map_name = self.version.get('map_groups', {}).get(group, {}).get(number)
         if not map_name:
             return Word(self.address, version=self.version, rom=self.rom).asm
         return map_name
@@ -573,7 +674,9 @@ def insert_chunks(chunks, filename, version):
                         break # it's a label
                     previous = previous_address()
                     if previous < address:
-                        new_line += '\n' + incbin(baserom_path, previous, address) + '\n'
+                        if not is_label(previous_asm()):
+                            new_line += '\n'
+                        new_line += incbin(baserom_path, previous, address) + '\n'
                     if asm:
                         if not is_label(previous_asm()) and is_label(asm):
                             new_line += '\n'
@@ -623,7 +726,9 @@ def get_setup_version(version_name='ruby'):
     setup_version(version)
     return version
 
-def get_recursive(class_, address, version_name='ruby', version=None):
+def get_recursive(class_, address=None, version_name='ruby', version=None):
+    if address is None:
+        address = class_.address
     if version is None:
         version = get_setup_version(version_name)
     chunks = flatten_nested_chunks(recursive_parse(class_, address, version=version, rom=version['baserom']).values())

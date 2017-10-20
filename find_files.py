@@ -43,7 +43,7 @@ def split_map_scripts(version):
 
 	seen = []
 	def get_filename():
-		return 'data/maps/scripts/{}.s'.format(seen[-1])
+		return 'data/maps/scripts/{}.inc'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
@@ -127,7 +127,7 @@ def split_map_assets():
 			elif start:
 				break
 	end = i
-	split_stuff(root, [(start, end, 'data/maps/_assets.s')])
+	split_stuff(root, [(start, end, 'data/maps/_assets.inc')])
 
 
 def split_map_events():
@@ -135,7 +135,7 @@ def split_map_events():
 
 	seen = []
 	def get_filename():
-		return 'data/maps/events/{}.s'.format(seen[-1])
+		return 'data/maps/events/{}.inc'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
@@ -168,7 +168,7 @@ def split_map_headers(version):
 
 	seen = []
 	def get_filename():
-		return 'data/maps/{}/header.s'.format(seen[-1])
+		return 'data/maps/{}/header.inc'.format(seen[-1])
 
 	writes = []
 	def write(start, end):
@@ -208,7 +208,7 @@ def split_map_groups():
 			elif start is not None:
 				break
 	end = i
-	split_stuff(root, [(start, end, 'data/maps/_groups.s')])
+	split_stuff(root, [(start, end, 'data/maps/_groups.inc')])
 
 
 def split_map_connections():
@@ -216,7 +216,7 @@ def split_map_connections():
 
 	seen = []
 	def get_filename():
-		return 'data/maps/{}/connections.s'.format(seen[-1])
+		return 'data/maps/{}/connections.inc'.format(seen[-1])
 
 	writes = []
 	def write(start, end):

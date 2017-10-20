@@ -15,6 +15,7 @@ emerald = {
 	'battle_frontier_constants_path': 'constants/battle_frontier_constants.s',
 	'charmap': charmap.emerald_decode,
 	'charmap_jp': charmap.emerald_jp_decode,
+	'mapfile': 'pokeemerald.map',
 }
 
 ruby = {
@@ -30,6 +31,7 @@ ruby = {
 	'field_object_constants_path': 'constants/map_object_constants.s',
 	'charmap': charmap.ruby_decode,
 	'charmap_jp': charmap.ruby_jp_decode,
+	'mapfile': 'pokeruby.map',
 }
 
 sapphire = {
@@ -45,4 +47,5 @@ sapphire = {
 	'field_object_constants_path': 'constants/map_object_constants.s',
 	'charmap': charmap.ruby_decode,
 	'charmap_jp': charmap.ruby_jp_decode,
+	'mapfile': 'pokesapphire.map',
 }
