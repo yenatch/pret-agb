@@ -245,6 +245,9 @@ class TrainerbattleArgs(ParamGroup):
 
 		ParamGroup.parse(self)
 
+class Special(Word):
+    constants = 'specials'
+
 event_commands = {
     0x00: { 'name': 'nop',
         'aliases': ['nop0', 'snop'],
@@ -465,9 +468,8 @@ event_commands = {
     },
     0x25: { 'name': 'special',
         'param_names': ['function'],
-        'param_types': ['word'],
-        'aliases': ['special'],
-        'description': 'Calls a special function; that is, a piece of ASM code designed for use by scripts and listed in a table of pointers.',
+        'param_types': [Special],
+        'description': 'Calls a special function; that is, a function designed for use by scripts and listed in a table of pointers.',
     },
     0x26: { 'name': 'specialvar',
         'param_names': ['output', 'function'],

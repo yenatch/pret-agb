@@ -125,6 +125,14 @@ def reverse_constants(variables):
 def read_reverse_constants(path):
 	return reverse_constants(read_constants(path))
 
+def read_specials(path):
+	specials = []
+	lines = open(path).readlines()
+	for line in lines:
+		if line.strip().startswith('def_special'):
+			label = line.split('def_special')[1].strip()
+			specials += [label]
+	return specials
 
 def setup_version(version):
 	if version.has_key('baserom_path'):
@@ -148,6 +156,7 @@ def setup_version(version):
 		'type_constants': read_reverse_constants('constants/type_constants.inc'),
 		'move_effect_constants': read_reverse_constants('constants/battle_move_effects.inc'),
 		'hold_effect_constants': read_reverse_constants('constants/hold_effects.inc'),
+		'specials': read_specials(version.get('specials_path', 'data/specials.inc')),
 	})
 
 	if version.get('mapfile'):
