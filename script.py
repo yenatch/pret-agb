@@ -396,10 +396,13 @@ class Label(Chunk):
         return asm
 
 class Comment(Chunk):
-    def to_asm(self):
+    @property
+    def asm(self):
         if hasattr(self, 'comment') and self.comment:
             return '@ ' + self.comment
         return ''
+    def to_asm(self):
+        return self.asm
 
 class Script(Chunk):
     commands = {}
