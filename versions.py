@@ -4,7 +4,7 @@ import charmap
 emerald = {
 	'version': 'emerald',
 	'map_groups_address': 0x486578,
-	'baserom_path': 'base_emerald.gba',
+	'baserom_path': 'baserom.gba',
 	'maps_paths': ['asm/emerald.s'],
 	'force_stop_addresses': [
 		0x209a99, # SlateportCityBattleTent waitstate
