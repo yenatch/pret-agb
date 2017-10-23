@@ -181,7 +181,7 @@ class Pointer(Int):
         return self.target(self.real_address, **self.target_args)
     @property
     def target_args(self):
-        return { k: getattr(self, k, None) for k in self.target_arg_names if getattr(self, k, None)}
+        return { k: getattr(self, k, None) for k in self.target_arg_names if getattr(self, k, None) is not None}
     def get_label(self):
         if hasattr(self, 'label'):
             return self.label.asm
