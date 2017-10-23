@@ -144,6 +144,11 @@ class Word(Value):
     name = '.2byte'
     num_bytes = 2
 
+class Int16(Word):
+    def parse(self):
+        Word.parse(self)
+        self.value -= (self.value & 0x8000) * 2
+
 class Int(Value):
     name = '.4byte'
     num_bytes = 4

@@ -89,10 +89,21 @@ class MapAttributesPointer(Pointer):
 class MapObject(Macro):
 	name = 'object_event'
 	param_classes = [
-		Byte, FieldGFXId,
-	] + [Byte] * 13 + [
-		EventScriptPointer,
-		Word, Byte, Byte,
+		('index', Byte),
+		('sprite', FieldGFXId),
+		('replacement', Byte),
+		('x', Int16),
+		('y', Int16),
+		('elevation', Byte),
+		('movement_type', Byte),
+		('radius', Byte),
+		(Byte), # filler
+		('trainer_type', Word),
+		('sight_radius_tree_etc', Word),
+		('script', EventScriptPointer),
+		('event_flag', Word),
+		(Byte), # filler
+		(Byte), # filler
 	]
 
 class MapObjects(List):
@@ -106,9 +117,9 @@ class MapObjectsPointer(Pointer):
 class MapWarp(Macro):
 	name = 'warp_def'
 	param_classes = [
-		('x', Word),
-		('y', Word),
-		Byte,
+		('x', Int16),
+		('y', Int16),
+		('trigger', Byte),
 		('warp', Byte),
 		('map', WarpMapId),
 	]
@@ -122,10 +133,14 @@ class MapWarpsPointer(Pointer):
 class MapCoordEvent(Macro):
 	name = 'coord_event'
 	param_classes = [
-		Word, Word,
-		Byte, Byte,
-		WordOrVariable, Word, Word,
-		EventScriptPointer,
+		('x', Int16),
+		('y', Int16),
+		('elevation', Byte),
+		Byte,
+		WordOrVariable,
+		Word,
+		Word,
+		('script', EventScriptPointer),
 	]
 
 class MapCoordEvents(List):
@@ -142,8 +157,10 @@ class HiddenItem(ParamGroup):
 class MapBGEvent(Macro):
 	name = 'bg_event'
 	param_classes = [
-		Word, Word,
-		Byte, ('kind', Byte),
+		('x', Int16),
+		('y', Int16),
+		Byte,
+		('kind', Byte),
 		Word,
 	]
 	def parse(self):
