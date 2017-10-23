@@ -325,12 +325,12 @@ class MapGroup(List):
     def parse(self):
         map_groups = self.version['map_groups']
         self.param_classes = [MapPointer]
-        self.count = len(map_groups[self.group])
+        self.count = len(map_groups.get(self.__dict__.get('group'), []))
         List.parse(self)
         for i, chunk in enumerate(self.chunks):
             chunk.group = self.group
             chunk.num = i
-            label_name = g + map_groups[self.group][i]
+            label_name = g + get_map_name(map_groups, self.group, i)
             label = Label(chunk.real_address)
             label.asm = label_name
             chunk.chunks += [label]

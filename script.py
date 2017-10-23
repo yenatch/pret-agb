@@ -48,7 +48,10 @@ class Object(object):
 
     def __init__(self, *args, **kwargs):
         for name, arg in zip(self.arg_names, args):
-            setattr(self, name, arg)
+            try:
+                setattr(self, name, arg)
+            except:
+                self.__dict__[name] = arg
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.parse()
@@ -563,16 +566,16 @@ def recursive_parse(*args, **kwargs):
                         default_label_base=chunk.target.__name__,
                         context_label=closure['context_labels'][-1],
                         include_address=chunk.include_address,
-			version=chunk.version,
-			rom=chunk.rom,
+                        version=chunk.version,
+                        rom=chunk.rom,
                     )
                     asm = chunk.version['labels'].get(chunk.value)
                     #if asm and 'Unknown' not in asm: label.asm = asm
                     if asm: label.asm = asm
                     chunk.label = label
-		target_args = {}
-		target_args.update(kwargs)
-		target_args.update(chunk.target_args)
+                target_args = {}
+                target_args.update(kwargs)
+                target_args.update(chunk.target_args)
                 recurse(chunk.target, chunk.real_address, **target_args)
         for c in chunk.chunks:
             recurse_pointers(c)

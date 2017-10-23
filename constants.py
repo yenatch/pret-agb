@@ -24,6 +24,10 @@ def find_labels(path):
 def read_mapfile(path):
 	"""This is way simpler..."""
 	labels = {}
+	try:
+		lines = open(path).readlines()
+	except:
+		return labels
 	for line in open(path):
 		parts = line.split(' ' * 16)
 		if len(parts) > 2:
@@ -72,16 +76,18 @@ def read_map_groups(path, map_names):
 	return maps
 
 def get_map_name(map_groups, group, num):
-	if map_groups:
-		group = map_groups.get(group)
-		if group:
-			label = group.get(num)
-			if label:
-				return label
+    try:
+        return map_groups[group][num]
+    except:
+        return None
 
 def read_constants(path):
-	lines = open(path).readlines()
 	variables = {}
+	try:
+		lines = open(path).readlines()
+	except:
+		return variables
+
 	for line in lines:
 		line = line.split('@')[0].strip()
 		if line.startswith('.set'):
@@ -127,7 +133,11 @@ def read_reverse_constants(path):
 
 def read_specials(path):
 	specials = []
-	lines = open(path).readlines()
+	try:
+		lines = open(path).readlines()
+	except:
+		return specials
+
 	for line in lines:
 		if line.strip().startswith('def_special'):
 			label = line.split('def_special')[1].strip()
