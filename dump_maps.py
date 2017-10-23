@@ -8,13 +8,14 @@ g = ''
 
 def dump_maps(version):
 	rom = version['baserom']
+	address = version['map_groups_address']
 	chunks = get_maps(version)
 	label = Label(address, asm='gMapGroups')
 	chunks[address].label = label
 	return chunks.values()
 
 def get_maps(version):
-	return recursive_parse(MapGroups, version=version)
+	return recursive_parse(MapGroups, version['map_groups_address'], version=version)
 
 class MapBorder(BinFile):
 	size = 4 * 2
@@ -317,6 +318,8 @@ class MapPointer(Pointer):
 		map_name = None
 		if hasattr(self, 'group') and hasattr(self, 'num'):
 			map_name = get_map_name(self.version.get('map_groups'), self.group, self.num)
+		if hasattr(self, 'map_name'):
+			map_name = self.map_name
 		if map_name:
 			return g + map_name
 		return g
