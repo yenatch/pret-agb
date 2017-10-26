@@ -62,6 +62,7 @@ class Object(object):
 class Chunk(Object):
     arg_names = ['address']
     atomic = False
+    is_global = False
     @property
     def length(self):
         return self.last_address - self.address
@@ -228,6 +229,7 @@ class Pointer(Int):
                         if isinstance(self.target, type) else
                         self.target.__class__.__name__
                     ),
+                    is_global=self.target.is_global,
                     include_address=self.include_address,
                     version=self.version,
                     rom=self.rom,
@@ -366,7 +368,6 @@ class Label(Chunk):
     default_label_base = 'Unknown'
     include_address = True
     address_comment = True
-    is_global = False
     counts = {}
     def count(self, base):
         self.counts.setdefault(base, 0)
@@ -573,6 +574,7 @@ def recursive_parse(*args, **kwargs):
                         chunk.real_address,
                         default_label_base=chunk.target.__name__,
                         context_label=closure['context_labels'][-1],
+                        is_global=chunk.target.is_global,
                         include_address=chunk.include_address,
                         version=chunk.version,
                         rom=chunk.rom,
