@@ -13,6 +13,9 @@ from movement import *
 
 
 class EventScript(Script):
+
+    is_global = True
+
     # event_command_classes doesn't exist yet, but it depends on EventScript being defined first.
     @property
     def commands(self):

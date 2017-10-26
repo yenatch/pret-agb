@@ -183,6 +183,7 @@ class MapBGEventsPointer(Pointer):
 
 class MapEvents(Macro):
 	name = 'map_events'
+	is_global = True
 	param_classes = [
 		Byte, Byte, Byte, Byte,
 		MapObjectsPointer, MapWarpsPointer, MapCoordEventsPointer, MapBGEventsPointer,
@@ -238,6 +239,7 @@ class MapScriptEntry(Macro):
 		Macro.parse(self)
 
 class MapScripts(ParamGroup):
+	is_global = True
 	param_classes = [Byte]
 	def parse(self):
 		self.param_classes = list(self.param_classes)
