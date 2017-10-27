@@ -693,6 +693,8 @@ def insert_chunks(chunks, filename, version):
                     if asm:
                         if not is_label(previous_asm()) and is_label(asm):
                             new_line += '\n'
+                        if previous > address:
+                            asm = '\n'.join(['@ {}'.format(x) for x in asm.split('\n')))
                         new_line += asm.encode('utf-8') + '\n'
                     address, last_address, asm = next_chunk()
                     if address is None:
